@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #dcebe3;
+  --page-bg: linear-gradient(160deg, #9ecdb6 0%, #cfe2d6 45%, #93b7df 100%);
+  --surface: #ffffff;
+  --border: #e4ebe7;
+  --green-900: #0b3d2e;
+  --green-800: #10503a;
+  --green-700: #1a6b49;
+  --blue-900: #0e2c59;
+  --blue-800: #143a73;
+  --mint-500: #12b76a;
+  --coral-500: #f0655a;
+  --coral-100: #fdeceb;
+  --amber-400: #f2a93b;
+  --amber-600: #d98c1f;
+  --slate-500: #64748b;
+  --slate-400: #94a0b4;
+  --slate-300: #a9b3cc;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.login {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 24px;
+  background: var(--page-bg);
+  font-family: var(--font-body);
+}
+
+@media (min-width: 900px) {
+  .login {
+    grid-template-columns: 0.9fr 1fr;
+  }
+}
+
+/* ---------- PANEL DE MARCA ---------- */
+
+.login__brand {
+  position: relative;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 48px;
+  border-radius: 28px;
+  background: linear-gradient(160deg, var(--green-800) 0%, var(--green-900) 55%, var(--blue-900) 100%);
+}
+
+@media (min-width: 900px) {
+  .login__brand {
+    display: flex;
+  }
+}
+
+.login__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: linear-gradient(160deg, var(--green-800) 0%, var(--green-900) 55%, var(--blue-900) 100%);
+}
+
+.login__brand-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 32, 64, 0.05) 0%, rgba(8, 34, 26, 0.78) 100%);
+}
+
+.login__brand-content {
+  position: relative;
+  max-width: 320px;
+}
+
+.login__mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.login__tagline {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* ---------- PANEL DE FORMULARIO ---------- */
+
+.login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.login__form {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 32px;
+}
+
+@media (max-width: 899px) {
+  .login__form {
+    box-shadow: 0 20px 40px -24px rgba(11, 61, 46, 0.25);
+  }
+}
+
+.login__name {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber-600);
+  margin-bottom: 10px;
+}
+
+.login__title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--green-900);
+  margin: 0 0 6px;
+}
+
+.login__subtitle {
+  font-size: 14px;
+  color: var(--slate-500);
+  margin: 0 0 28px;
+}
+
+/* ---------- CAMPOS ---------- */
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green-900);
+  margin-bottom: 6px;
+}
+
+.field__control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #fbfcfd;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field__control:focus-within {
+  border-color: var(--green-800);
+  box-shadow: 0 0 0 3px rgba(11, 61, 46, 0.08);
+}
+
+.field__control--error {
+  border-color: var(--coral-500);
+}
+
+.field__control--error:focus-within {
+  box-shadow: 0 0 0 3px rgba(240, 101, 90, 0.12);
+}
+
+.field__icon {
+  flex-shrink: 0;
+  color: var(--slate-400);
+}
+
+.field__control input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--green-900);
+  padding: 12px 0;
+}
+
+.field__control input::placeholder {
+  color: var(--slate-300);
+}
+
+.field__toggle {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--slate-400);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.field__error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--coral-500);
+}
+
+/* ---------- FILA EXTRA ---------- */
+
+.login__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--slate-500);
+  cursor: pointer;
+}
+
+.checkbox input {
+  accent-color: var(--green-900);
+}
+
+.login__link {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--blue-800);
+  text-decoration: none;
+}
+
+.login__link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- BOTÓN ---------- */
+
+.login__submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 0;
+  background: var(--green-900);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.login__submit:hover {
+  opacity: 0.92;
+}
+
+.login__submit:active {
+  transform: scale(0.99);
+}
+
+.login__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,276 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&display=swap');
+
+.transfer-page {
+  min-height: 100vh;
+  padding: 0 24px 40px;
+  background: var(--page-bg);
+  font-family: var(--font-body), 'Inter', sans-serif;
+}
+
+.transfer-grid {
+  max-width: 880px;
+  margin: 32px auto 0;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .transfer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tarjeta del formulario */
+
+.transfer-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px;
+}
+
+.transfer-title {
+  font-family: var(--font-display), 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  color: var(--green-900);
+  margin: 0 0 4px;
+}
+
+.transfer-subtitle {
+  font-size: 14px;
+  color: var(--slate-500);
+  margin: 0 0 24px;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green-900);
+  margin-bottom: 6px;
+}
+
+.field .optional {
+  font-weight: 400;
+  color: var(--slate-400);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: var(--font-body), 'Inter', sans-serif;
+  color: var(--green-900);
+  background: var(--surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--slate-300);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--amber-400);
+  box-shadow: 0 0 0 3px rgba(242, 169, 59, 0.18);
+}
+
+.input:disabled,
+.textarea:disabled {
+  background: var(--bg);
+  color: var(--slate-400);
+}
+
+.input-error {
+  border-color: var(--coral-500);
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(240, 101, 90, 0.18);
+}
+
+.error-text {
+  color: var(--coral-500);
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+/* Botones */
+
+.btn-primary {
+  width: 100%;
+  background: var(--green-900);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--green-800);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--green-900);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg);
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Estado de éxito */
+
+.success-state {
+  text-align: center;
+  padding: 24px 8px;
+}
+
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--mint-100);
+  color: var(--mint-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.success-title {
+  font-family: var(--font-display), 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  color: var(--green-900);
+  margin: 0 0 6px;
+}
+
+.success-subtitle {
+  font-size: 14px;
+  color: var(--slate-500);
+  margin: 0 0 24px;
+}
+
+/* Comprobante estilo "tiquete de río" */
+
+.receipt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.receipt-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--green-900), var(--amber-400));
+}
+
+.receipt-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate-400);
+  margin: 8px 0 4px;
+}
+
+.receipt-amount {
+  font-family: var(--font-display), 'Space Grotesk', sans-serif;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--green-900);
+  margin: 0 0 16px;
+  word-break: break-word;
+}
+
+.receipt-divider {
+  border-top: 1px dashed var(--border);
+  margin: 12px 0;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--slate-500);
+  padding: 6px 0;
+}
+
+.receipt-row strong {
+  color: var(--green-900);
+  font-weight: 500;
+  text-align: right;
+}
+
+.receipt-perforation {
+  display: flex;
+  justify-content: space-between;
+  margin: 16px -24px 12px;
+  padding: 0 8px;
+}
+
+.receipt-perforation span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.receipt-status {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--amber-600);
+  margin: 0;
+}
+
+.receipt-card.success .receipt-status {
+  color: var(--mint-500);
+}
