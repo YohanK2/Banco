@@ -1,24 +1,25 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Transferencias from './pages/transferencias'
 import SaldoMovimientos from './pages/SaldoMovimientos'
 import Retiros from './pages/Retiros'
+import Historial from './pages/Historial'
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/resumen" element={<Dashboard />} />
         <Route path="/transferencias" element={<Transferencias />} />
         <Route path="/movimientos" element={<SaldoMovimientos />} />
         <Route path="/retiros" element={<Retiros />} />
-        <Route path="/historial" element={<Dashboard />} />
+        <Route path="/historial" element={<Historial />} />
         <Route path="/perfil" element={<Dashboard />} />
         <Route path="/soporte" element={<Dashboard />} />
       </Routes>
