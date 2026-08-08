@@ -282,3 +282,19 @@ select.input {
 .receipt-card.success .receipt-status {
   color: var(--mint-500);
 }
+
+/* ---------- INTEGRACIÓN SIDEBAR ---------- */
+
+@media (min-width: 980px) {
+  .withdraw-page {
+    display: flex;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .withdraw-page > .withdraw-grid {
+    flex: 1;
+    min-width: 0;
+    margin: 32px auto 48px;
+  }
+}

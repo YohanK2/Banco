@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import MareaNavbar from '../components/Navbar.jsx';
+import Sidebar from '../components/Sidebar.jsx';
 import '../assets/styles/retiros.css';
 
 const formatCOP = (value) => {
@@ -78,7 +78,7 @@ export default function Retiros() {
 
   return (
     <div className="withdraw-page">
-      <MareaNavbar />
+      <Sidebar />
       <div className="withdraw-grid">
         <section className="withdraw-card">
           {step !== 'success' && (

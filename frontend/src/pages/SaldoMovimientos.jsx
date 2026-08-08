@@ -12,7 +12,7 @@ import {
   Smartphone,
   Zap,
 } from "lucide-react";
-import MareaNavbar from "../components/Navbar.jsx";
+import Sidebar from "../components/Sidebar.jsx";
 import "../assets/styles/SaldoMovimientos.css";
 
 const fmt = (n) =>
@@ -43,7 +43,7 @@ export default function SaldoMovimientos() {
 
   return (
     <div className="saldo-page">
-      <MareaNavbar />
+      <Sidebar />
 
       <main className="saldo-main">
         {/* SALUDO */}

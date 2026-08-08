@@ -25,7 +25,7 @@
   box-sizing: border-box;
 }
 
-.bl {
+.rg {
   min-height: 100vh;
   width: 100%;
   display: grid;
@@ -35,7 +35,7 @@
 }
 
 @media (min-width: 940px) {
-  .bl {
+  .rg {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -46,7 +46,7 @@
 
 /* ================= PANEL DE MARCA ================= */
 
-.bl-brand {
+.rg-brand {
   position: relative;
   overflow: hidden;
   display: none;
@@ -57,28 +57,12 @@
 }
 
 @media (min-width: 940px) {
-  .bl-brand {
+  .rg-brand {
     display: flex;
   }
 }
 
-.bl-brand__video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 0;
-}
-
-.bl-brand__overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(160deg, rgba(14, 58, 44, 0.72) 0%, rgba(11, 42, 32, 0.9) 70%);
-}
-
-.bl-brand__orbit {
+.rg-brand__orbit {
   position: absolute;
   width: 380px;
   height: 380px;
@@ -86,10 +70,9 @@
   border-radius: 999px;
   right: -80px;
   top: 20%;
-  z-index: 1;
 }
 
-.bl-brand__dot {
+.rg-brand__dot {
   position: absolute;
   width: 8px;
   height: 8px;
@@ -97,10 +80,27 @@
   background: var(--lime-400);
   left: 20%;
   bottom: 22%;
-  z-index: 1;
 }
 
-.bl-brand__top {
+.rg-brand__back {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.rg-brand__back:hover {
+  color: #ffffff;
+}
+
+.rg-brand__top {
   position: relative;
   display: flex;
   align-items: center;
@@ -108,7 +108,7 @@
   margin-bottom: 48px;
 }
 
-.bl-brand__mark {
+.rg-brand__mark {
   width: 34px;
   height: 34px;
   border-radius: 9px;
@@ -122,14 +122,14 @@
   font-size: 17px;
 }
 
-.bl-brand__name {
+.rg-brand__name {
   font-family: var(--font-display);
   font-size: 17px;
   font-weight: 700;
   color: #ffffff;
 }
 
-.bl-brand__name em {
+.rg-brand__name em {
   font-style: normal;
   font-size: 10px;
   font-weight: 700;
@@ -138,7 +138,69 @@
   margin-left: 3px;
 }
 
-.bl-brand__badge {
+.rg-brand__card {
+  position: relative;
+  z-index: 2;
+  width: 280px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  padding: 22px 22px 26px;
+  margin-bottom: 28px;
+}
+
+.rg-brand__card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+}
+
+.rg-brand__card-wifi {
+  color: rgba(255, 255, 255, 0.4);
+  transform: rotate(90deg);
+}
+
+.rg-brand__card-amount {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px;
+}
+
+.rg-brand__card-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--lime-400);
+}
+
+.rg-brand__card-chip {
+  width: 34px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--gold-400), var(--gold-600));
+  margin-top: 22px;
+}
+
+.rg-brand__card-visa {
+  position: absolute;
+  bottom: 24px;
+  right: 22px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  font-style: italic;
+  color: #ffffff;
+}
+
+.rg-brand__badge {
   position: relative;
   z-index: 2;
   display: inline-flex;
@@ -152,7 +214,7 @@
   box-shadow: 0 16px 32px -16px rgba(11, 42, 32, 0.4);
 }
 
-.bl-brand__badge-icon {
+.rg-brand__badge-icon {
   width: 30px;
   height: 30px;
   flex-shrink: 0;
@@ -164,7 +226,7 @@
   justify-content: center;
 }
 
-.bl-brand__badge p {
+.rg-brand__badge p {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
@@ -172,7 +234,7 @@
   line-height: 1.35;
 }
 
-.bl-brand__tagline {
+.rg-brand__tagline {
   position: relative;
   z-index: 2;
   max-width: 300px;
@@ -186,19 +248,19 @@
 
 /* ================= PANEL DE FORMULARIO ================= */
 
-.bl-panel {
+.rg-panel {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
 }
 
-.bl-form {
+.rg-form {
   width: 100%;
   max-width: 380px;
 }
 
-.bl-form__eyebrow {
+.rg-form__eyebrow {
   display: inline-block;
   font-size: 12.5px;
   font-weight: 600;
@@ -206,7 +268,7 @@
   margin-bottom: 8px;
 }
 
-.bl-form__title {
+.rg-form__title {
   font-family: var(--font-display);
   font-size: 27px;
   font-weight: 700;
@@ -214,7 +276,7 @@
   margin: 0 0 6px;
 }
 
-.bl-form__subtitle {
+.rg-form__subtitle {
   font-size: 14px;
   color: var(--text-gray);
   margin: 0 0 28px;
@@ -222,11 +284,11 @@
 
 /* ---------- CAMPOS ---------- */
 
-.field {
+.rg-field {
   margin-bottom: 18px;
 }
 
-.field__label {
+.rg-field__label {
   display: block;
   font-size: 13px;
   font-weight: 500;
@@ -234,7 +296,7 @@
   margin-bottom: 6px;
 }
 
-.field__control {
+.rg-field__control {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -245,25 +307,25 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.field__control:focus-within {
+.rg-field__control:focus-within {
   border-color: var(--green-700);
   box-shadow: 0 0 0 3px rgba(23, 90, 63, 0.1);
 }
 
-.field__control--error {
+.rg-field__control--error {
   border-color: var(--coral-500);
 }
 
-.field__control--error:focus-within {
+.rg-field__control--error:focus-within {
   box-shadow: 0 0 0 3px rgba(240, 101, 90, 0.12);
 }
 
-.field__icon {
+.rg-field__icon {
   flex-shrink: 0;
   color: var(--text-gray-light);
 }
 
-.field__control input {
+.rg-field__control input {
   flex: 1;
   border: none;
   outline: none;
@@ -274,11 +336,11 @@
   padding: 12px 0;
 }
 
-.field__control input::placeholder {
+.rg-field__control input::placeholder {
   color: #c3cec8;
 }
 
-.field__toggle {
+.rg-field__toggle {
   flex-shrink: 0;
   border: none;
   background: transparent;
@@ -289,49 +351,16 @@
   padding: 4px;
 }
 
-.field__error {
+.rg-field__error {
   margin: 6px 0 0;
   font-size: 12px;
   font-weight: 500;
   color: var(--coral-500);
 }
 
-/* ---------- FILA EXTRA ---------- */
-
-.bl-form__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 26px;
-}
-
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-gray);
-  cursor: pointer;
-}
-
-.checkbox input {
-  accent-color: var(--green-800);
-}
-
-.bl-form__link {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--green-800);
-  text-decoration: none;
-}
-
-.bl-form__link:hover {
-  text-decoration: underline;
-}
-
 /* ---------- BOTÓN ---------- */
 
-.bl-submit {
+.rg-submit {
   width: 100%;
   display: flex;
   align-items: center;
@@ -349,32 +378,32 @@
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.bl-submit:hover:not(:disabled) {
+.rg-submit:hover:not(:disabled) {
   box-shadow: 0 10px 24px -12px rgba(242, 169, 59, 0.6);
 }
 
-.bl-submit:active:not(:disabled) {
+.rg-submit:active:not(:disabled) {
   transform: scale(0.99);
 }
 
-.bl-submit:disabled {
+.rg-submit:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
 
-.bl-form__footer {
+.rg-form__footer {
   text-align: center;
   font-size: 13px;
   color: var(--text-gray);
   margin: 22px 0 0;
 }
 
-.bl-form__footer a {
+.rg-form__footer a {
   color: var(--green-800);
   font-weight: 600;
   text-decoration: none;
 }
 
-.bl-form__footer a:hover {
+.rg-form__footer a:hover {
   text-decoration: underline;
 }

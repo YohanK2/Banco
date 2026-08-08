@@ -604,3 +604,17 @@
   color: #ffffff;
   font-weight: 600;
 }
+
+/* ---------- INTEGRACIÓN SIDEBAR ---------- */
+
+@media (min-width: 980px) {
+  .dashboard {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .dashboard > .main {
+    flex: 1;
+    min-width: 0;
+  }
+}

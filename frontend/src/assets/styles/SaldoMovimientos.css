@@ -281,3 +281,19 @@
 .movement__amount-value--out {
   color: var(--coral-500);
 }
+
+/* ---------- INTEGRACIÓN SIDEBAR ---------- */
+
+@media (min-width: 980px) {
+  .saldo-page {
+    display: flex;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .saldo-page > .saldo-main {
+    flex: 1;
+    min-width: 0;
+    margin: 32px auto 48px;
+  }
+}

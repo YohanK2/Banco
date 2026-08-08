@@ -18,7 +18,7 @@ import {
   Check,
   ChevronRight,
 } from "lucide-react";
-import MareaNavbar from "../components/Navbar.jsx";
+import Sidebar from "../components/Sidebar.jsx";
 import "../assets/styles/dashboard.css";
 
 /*
@@ -135,8 +135,8 @@ export default function BankDashboard() {
 
   return (
     <div className="dashboard">
-      {/* NAVBAR */}
-      <MareaNavbar />
+      {/* SIDEBAR */}
+      <Sidebar />
 
       <main className="main">
         {/* SALUDO */}
@@ -255,7 +255,7 @@ export default function BankDashboard() {
         >
           <div className="movements__header">
             <h2 className="movements__title">Movimientos recientes</h2>
-            <button className="movements__link">
+            <button className="movements__link" onClick={() => navigate("/historial")}>
               Ver todos <ChevronRight size={15} />
             </button>
           </div>
