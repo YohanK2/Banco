@@ -1,10 +1,10 @@
 -- ==========================
 -- BANCO DIGITAL
--- ESQUEMA DE BASE DE DATOS
+-- ESQUEMA DE BASE DE DATOS (MySQL 8)
 -- ==========================
 
 CREATE TABLE usuarios (
-    id_usuario SERIAL PRIMARY KEY,
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     correo VARCHAR(100) UNIQUE NOT NULL,
     contrasena_hash VARCHAR(255) NOT NULL,
     rol VARCHAR(20) DEFAULT 'CLIENTE',
@@ -13,7 +13,7 @@ CREATE TABLE usuarios (
 );
 
 CREATE TABLE clientes (
-    id_cliente SERIAL PRIMARY KEY,
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT UNIQUE NOT NULL,
     nombres VARCHAR(100),
     apellidos VARCHAR(100),
@@ -24,22 +24,22 @@ CREATE TABLE clientes (
 );
 
 CREATE TABLE cuentas (
-    id_cuenta SERIAL PRIMARY KEY,
+    id_cuenta INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente INT NOT NULL,
     numero_cuenta VARCHAR(20) UNIQUE,
     tipo VARCHAR(20),
-    saldo NUMERIC(12,2),
+    saldo DECIMAL(12,2),
     estado VARCHAR(20) DEFAULT 'ACTIVA' CHECK (estado IN ('ACTIVA', 'BLOQUEADA', 'CERRADA')),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(id_cliente) REFERENCES clientes(id_cliente)
 );
 
 CREATE TABLE transacciones (
-    id_transaccion SERIAL PRIMARY KEY,
+    id_transaccion INT AUTO_INCREMENT PRIMARY KEY,
     cuenta_origen INT,
     cuenta_destino INT,
     tipo VARCHAR(20),
-    monto NUMERIC(12,2),
+    monto DECIMAL(12,2),
     descripcion TEXT,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(cuenta_origen) REFERENCES cuentas(id_cuenta),
@@ -47,7 +47,7 @@ CREATE TABLE transacciones (
 );
 
 CREATE TABLE beneficiarios (
-    id_beneficiario SERIAL PRIMARY KEY,
+    id_beneficiario INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente INT,
     cuenta_destino INT,
     alias VARCHAR(50),
@@ -56,7 +56,7 @@ CREATE TABLE beneficiarios (
 );
 
 CREATE TABLE refresh_tokens (
-    id_token SERIAL PRIMARY KEY,
+    id_token INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT,
     token TEXT,
     fecha_expiracion TIMESTAMP,
@@ -65,7 +65,7 @@ CREATE TABLE refresh_tokens (
 );
 
 CREATE TABLE auditoria (
-    id_evento SERIAL PRIMARY KEY,
+    id_evento INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT,
     accion VARCHAR(100),
     descripcion TEXT,
