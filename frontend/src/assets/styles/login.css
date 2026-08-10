@@ -44,16 +44,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ================= PANEL DE MARCA ================= */
+/* ================= PANEL DE MARCA (video de fondo, a sangre) ================= */
 
 .bl-brand {
   position: relative;
   overflow: hidden;
   display: none;
   flex-direction: column;
-  justify-content: center;
-  padding: 56px;
-  background: linear-gradient(160deg, var(--green-900) 0%, var(--green-950) 70%);
+  justify-content: space-between;
+  padding: 40px 44px;
+  background: var(--green-950);
 }
 
 @media (min-width: 940px) {
@@ -67,7 +67,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: fill;
+  object-position: center;
   z-index: 0;
 }
 
@@ -75,18 +76,19 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(160deg, rgba(14, 58, 44, 0.72) 0%, rgba(11, 42, 32, 0.9) 70%);
+  background: linear-gradient(180deg, rgba(11, 42, 32, 0.55) 0%, rgba(11, 42, 32, 0.35) 40%, rgba(8, 27, 20, 0.82) 100%);
 }
 
 .bl-brand__orbit {
   position: absolute;
   width: 380px;
   height: 380px;
-  border: 1.5px dashed rgba(255, 255, 255, 0.12);
+  border: 1.5px dashed rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   right: -80px;
-  top: 20%;
+  top: 12%;
   z-index: 1;
+  pointer-events: none;
 }
 
 .bl-brand__dot {
@@ -95,17 +97,23 @@
   height: 8px;
   border-radius: 999px;
   background: var(--lime-400);
-  left: 20%;
-  bottom: 22%;
+  left: 22%;
+  bottom: 24%;
   z-index: 1;
 }
 
-.bl-brand__top {
+/* Grupo superior: logo + insignia flotante */
+
+.bl-brand__header {
   position: relative;
+  z-index: 2;
+}
+
+.bl-brand__top {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 48px;
+  margin-bottom: 24px;
 }
 
 .bl-brand__mark {
@@ -139,22 +147,19 @@
 }
 
 .bl-brand__badge {
-  position: relative;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: var(--surface);
+  background: rgba(253, 253, 251, 0.96);
   border-radius: 16px;
-  padding: 10px 14px;
-  margin-bottom: 32px;
+  padding: 9px 13px;
   width: fit-content;
-  box-shadow: 0 16px 32px -16px rgba(11, 42, 32, 0.4);
+  box-shadow: 0 16px 32px -16px rgba(0, 0, 0, 0.45);
 }
 
 .bl-brand__badge-icon {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   border-radius: 999px;
   background: var(--mint-50);
@@ -166,22 +171,25 @@
 
 .bl-brand__badge p {
   margin: 0;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-dark);
   line-height: 1.35;
 }
 
+/* Mensaje inferior */
+
 .bl-brand__tagline {
   position: relative;
   z-index: 2;
-  max-width: 300px;
+  max-width: 380px;
   font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 500;
-  line-height: 1.4;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.28;
   color: #ffffff;
   margin: 0;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* ================= PANEL DE FORMULARIO ================= */

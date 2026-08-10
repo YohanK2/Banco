@@ -7,11 +7,20 @@ import "../assets/styles/login.css";
 /*
   BANCHOCÓ BANK — inicio de sesión
   --------------------------------------------------
-  Misma identidad de la landing: verde bosque + dorado + acento
-  lima. Panel izquierdo repite el motivo visual del hero (tarjeta +
-  insignia flotante + patrón orbital) para que el login se sienta
-  como parte del mismo sitio, no como una pantalla aparte.
+  Panel izquierdo: video a sangre (edge-to-edge) con overlay verde
+  oscuro semitransparente, degradado más fuerte hacia abajo para que
+  el mensaje siga siendo legible sobre cualquier escena. Usa metraje
+  del Chocó (selva, ríos, paisaje) para darle identidad propia al
+  banco en vez de un stock genérico de finanzas.
+
+  Reemplaza VIDEO_SRC por tus assets reales. Mientras no haya
+  video, el overlay ya deja el panel legible.
+
+  Panel derecho: formulario de login sin cambios de fondo, limpio y
+  blanco, dedicado solo a la autenticación.
 */
+
+const VIDEO_SRC = "/choco/inicio.mp4";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -58,11 +67,11 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
 
   return (
     <div className="bl">
-      {/* PANEL DE MARCA */}
+      {/* PANEL DE MARCA — video a sangre */}
       <div className="bl-brand">
         <video
           className="bl-brand__video"
-          src="/choco/otro.mp4"
+          src={VIDEO_SRC}
           autoPlay
           muted
           loop
@@ -72,32 +81,39 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
         <div className="bl-brand__orbit" />
         <div className="bl-brand__dot" />
 
-        <div className="bl-brand__top">
-          <div className="bl-brand__mark">B</div>
-          <span className="bl-brand__name">
-            Banchocó <em>BANK</em>
-          </span>
-        </div>
-
         <motion.div
-          className="bl-brand__badge"
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
+          className="bl-brand__header"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="bl-brand__badge-icon">
-            <ShieldCheck size={16} />
+          <div className="bl-brand__top">
+            <div className="bl-brand__mark">B</div>
+            <span className="bl-brand__name">
+              Banchocó <em>BANK</em>
+            </span>
           </div>
-          <p>
-            Tu dinero
-            <br />
-            siempre disponible
-          </p>
+
+          <div className="bl-brand__badge">
+            <div className="bl-brand__badge-icon">
+              <ShieldCheck size={15} />
+            </div>
+            <p>
+              Tu dinero
+              <br />
+              siempre disponible
+            </p>
+          </div>
         </motion.div>
 
-        <p className="bl-brand__tagline">
+        <motion.p
+          className="bl-brand__tagline"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+        >
           Gestiona tu dinero de forma fácil, rápida y segura desde donde estés.
-        </p>
+        </motion.p>
       </div>
 
       {/* PANEL DE FORMULARIO */}
@@ -178,7 +194,7 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
           </button>
 
           <p className="bl-form__footer">
-            ¿No tienes cuenta? <a href="/registro">Abrir cuenta</a>
+            ¿No tienes cuenta? <a href="#">Abrir cuenta</a>
           </p>
         </motion.form>
       </div>
