@@ -1,23 +1,22 @@
 services:
-  mysql:
-    image: mysql:8
+  postgres:
+    image: postgres:17
 
-    container_name: banco_mysql
+    container_name: banco_postgres
 
     restart: unless-stopped
 
     environment:
-      MYSQL_ROOT_PASSWORD: 123456
-      MYSQL_DATABASE: banco_digital
-      MYSQL_USER: banco
-      MYSQL_PASSWORD: 123456
+      POSTGRES_DB: banco_digital
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
 
     ports:
-      - "3306:3306"
+      - "5432:5432"
 
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
       - ./database/banco.sql:/docker-entrypoint-initdb.d/01-banco.sql
 
 volumes:
-  mysql_data:
+  postgres_data:

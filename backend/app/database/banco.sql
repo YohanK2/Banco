@@ -1,3 +1,4 @@
+
 -- ==========================
 -- BANCO DIGITAL
 -- ESQUEMA DE BASE DE DATOS
