@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck, ArrowRight } from "lucide-react";
 import "../assets/styles/login.css";
+
 
 /*
   BANCHOCÓ BANK — inicio de sesión

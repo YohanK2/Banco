@@ -1,16 +1,32 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi.responses import JSONResponse
 
 from app.database.connection import check_connection
+
 from app.routes.account import router as accounts_router
+
 from app.routes.client import router as clients_router
+
 from app.routes.transaction import router as transactions_router
+
 from app.routes.user import router as users_router
+
 
 app = FastAPI(
     title="Banco Digital API",
     description="API REST del Banco Digital",
     version="1.0.0",
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(clients_router)
