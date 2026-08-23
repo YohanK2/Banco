@@ -6,11 +6,9 @@ from fastapi.responses import JSONResponse
 from app.database.connection import check_connection
 
 from app.routes.account import router as accounts_router
-
+from app.routes.auth import router as auth_router
 from app.routes.client import router as clients_router
-
 from app.routes.transaction import router as transactions_router
-
 from app.routes.user import router as users_router
 
 
@@ -29,10 +27,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(clients_router)
 app.include_router(accounts_router)
 app.include_router(transactions_router)
 app.include_router(users_router)
+
 
 
 @app.get("/")

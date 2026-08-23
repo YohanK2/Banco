@@ -7,13 +7,40 @@ from app.models import Cliente, Cuenta
 from app.schemas.account import AccountCreate, AccountResponse, AccountUpdate
 
 
+def generate_account_number(db: Session) -> str:
+    """
+    Genera automáticamente un número de cuenta único de 10 dígitos.
+    Base inicial: 1000000001.
+
+    Busca el valor numérico más alto existente de 10 dígitos y calcula el siguiente,
+    garantizando unicidad sin colisiones.
+    """
+    cuentas = db.query(Cuenta.numero_cuenta).filter(Cuenta.numero_cuenta.isnot(None)).all()
+    numeros = []
+    for (num,) in cuentas:
+        if num and num.isdigit() and len(num) == 10:
+            numeros.append(int(num))
+
+    if numeros:
+        siguiente = max(numeros) + 1
+    else:
+        siguiente = 1000000001
+
+    candidato = str(siguiente)
+    while db.query(Cuenta).filter(Cuenta.numero_cuenta == candidato).first() is not None:
+        siguiente += 1
+        candidato = str(siguiente)
+
+    return candidato
+
+
 def create_account(db: Session, data: AccountCreate) -> Optional[AccountResponse]:
     """
     Crea una cuenta bancaria nueva.
 
     Reglas de negocio:
     - La cuenta debe pertenecer a un cliente existente.
-    - El número de cuenta debe ser único.
+    - El número de cuenta debe ser único (si no se envía, se genera automáticamente).
     - El saldo inicial no puede ser negativo (validado por el schema).
     - El estado inicial siempre es ACTIVA.
 
@@ -34,10 +61,13 @@ def create_account(db: Session, data: AccountCreate) -> Optional[AccountResponse
         )
         if cuenta_existente is not None:
             return None
+        numero_cuenta = data.numero_cuenta
+    else:
+        numero_cuenta = generate_account_number(db)
 
     cuenta = Cuenta(
         id_cliente=data.id_cliente,
-        numero_cuenta=data.numero_cuenta,
+        numero_cuenta=numero_cuenta,
         tipo=data.tipo,
         saldo=data.saldo,
         estado="ACTIVA",
@@ -50,6 +80,7 @@ def create_account(db: Session, data: AccountCreate) -> Optional[AccountResponse
         return None
     db.refresh(cuenta)
     return AccountResponse.model_validate(cuenta)
+
 
 
 def get_accounts(db: Session) -> List[AccountResponse]:

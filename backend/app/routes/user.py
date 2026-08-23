@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.auth import RegisterRequest, RegisterResponse
+from app.schemas.user import UserResponse, UserUpdate
+from app.services.auth_service import register_client
 from app.services.user_service import (
-    create_user,
     get_user_by_id,
     get_users,
     update_user,
@@ -17,20 +18,40 @@ router = APIRouter(prefix="/users", tags=["Usuarios"])
 
 @router.post(
     "",
-    response_model=UserResponse,
+    response_model=RegisterResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Crear usuario y cuenta integral",
+    description=(
+        "Crea de forma atómica el usuario, el cliente asociado y su cuenta "
+        "bancaria activa con saldo inicial 0.00 y número generado automáticamente."
+    ),
 )
 def create_user_endpoint(
-    user_data: UserCreate,
+    user_data: RegisterRequest,
     db: Session = Depends(get_db),
 ):
-    usuario = create_user(db, user_data)
-    if usuario is None:
+    resultado, error = register_client(db, user_data)
+
+    if error == "EMAIL_EXISTS":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="El correo ya está registrado.",
+            detail="El correo ya se encuentra registrado.",
         )
-    return usuario
+
+    if error == "DOCUMENT_EXISTS":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El documento de identidad ya se encuentra registrado.",
+        )
+
+    if error == "DB_ERROR" or resultado is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ocurrió un error interno al procesar el registro integral.",
+        )
+
+    return resultado
+
 
 
 @router.get("", response_model=List[UserResponse])

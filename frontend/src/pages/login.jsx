@@ -195,7 +195,7 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
           </button>
 
           <p className="bl-form__footer">
-            ¿No tienes cuenta? <a href="#">Abrir cuenta</a>
+            ¿No tienes cuenta? <a href="/registro">Abrir cuenta</a>
           </p>
         </motion.form>
       </div>
