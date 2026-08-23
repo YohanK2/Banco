@@ -257,8 +257,45 @@
 
 .rg-form {
   width: 100%;
-  max-width: 380px;
+  max-width: 480px;
 }
+
+.rg-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 14px;
+}
+
+@media (min-width: 520px) {
+  .rg-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rg-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+.rg-alert--error {
+  background: #fdf2f2;
+  border: 1px solid #f8b4b4;
+  color: #9b1c1c;
+}
+
+.rg-alert--success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
 
 .rg-form__eyebrow {
   display: inline-block;
