@@ -12,13 +12,6 @@ class LoginRequest(BaseModel):
     contrasena: str
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    correo: EmailStr
-    rol: str
-
-
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -37,7 +30,6 @@ class UserMeResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
-
 
 
 class RegisterRequest(BaseModel):
@@ -67,13 +59,5 @@ class RegisterResponse(BaseModel):
     usuario: UserResponse
     cliente: ClientResponse
     cuenta: AccountResponse
-
-
-class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    usuario: UserResponse
-    cliente: Optional[ClientResponse] = None
-    cuenta: Optional[AccountResponse] = None
 
 

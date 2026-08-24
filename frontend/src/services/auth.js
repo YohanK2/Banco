@@ -41,6 +41,12 @@ export async function login(correo, contrasena) {
   return response.data;
 }
 
+export async function register(formData) {
+  const response = await api.post("/auth/register", formData);
+  // El registro no hace login automático, solo redirige a login
+  return response.data;
+}
+
 export async function logoutApi() {
   try {
     await api.post("/auth/logout");
@@ -51,34 +57,19 @@ export async function logoutApi() {
 }
 
 /*
-  Refresca los datos del perfil desde el backend.
+  Refresca los datos del perfil desde el backend usando /auth/me.
   Devuelve la sesión actualizada o null si no hay sesión /
   el backend no responde (en ese caso se conserva la caché).
 */
 export async function fetchProfile() {
-  const session = getSession();
-  if (!session?.id_usuario) return null;
-
-  let usuario = session;
-  let cliente = session.cliente || null;
-
   try {
-    const userResponse = await api.get(`/users/${session.id_usuario}`);
-    usuario = { ...session, ...userResponse.data };
-  } catch {
+    const response = await api.get("/auth/me");
+    const { usuario, cliente, cuenta_principal: cuenta, cuentas } = response.data;
+    const sessionData = { ...usuario, cliente, cuenta, cuentas };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+    return sessionData;
+  } catch (error) {
     // Si falla, conservamos los datos en caché.
+    return getSession();
   }
-
-  if (cliente?.id_cliente) {
-    try {
-      const clientResponse = await api.get(`/clients/${cliente.id_cliente}`);
-      cliente = { ...cliente, ...clientResponse.data };
-    } catch {
-      // Ídem.
-    }
-  }
-
-  const updated = { ...usuario, cliente };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
-  return updated;
 }

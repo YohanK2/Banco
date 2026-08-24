@@ -9,6 +9,7 @@ from app.services.account_service import (
     create_account,
     get_account_by_id,
     get_accounts,
+    get_accounts_by_client,
     update_account_state,
 )
 
@@ -65,3 +66,8 @@ def update_account_state_endpoint(
             detail="Cuenta no encontrada.",
         )
     return cuenta
+
+
+@router.get("/client/{client_id}", response_model=List[AccountResponse])
+def get_accounts_by_client_endpoint(client_id: int, db: Session = Depends(get_db)):
+    return get_accounts_by_client(db, client_id)

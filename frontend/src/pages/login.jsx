@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck, ArrowRight, AlertCircle } from "lucide-react";
-import authService from "../services/authService.js";
+import { login as loginApi, getSession } from "../services/auth.js";
 import "../assets/styles/login.css";
 
 const VIDEO_SRC = "/choco/inicio.mp4";
@@ -27,7 +27,7 @@ export function validate({ email, password }) {
   return errors;
 }
 
-export default function BanchocoLogin({ onLogin }) {
+export default function BanchocoLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +38,7 @@ export default function BanchocoLogin({ onLogin }) {
 
   useEffect(() => {
     if (getSession()) navigate("/dashboard");
-  }, [navigate]);
+  }, [navigate, getSession]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,8 +49,7 @@ export default function BanchocoLogin({ onLogin }) {
 
     setSubmitting(true);
     try {
-      await authService.login(email.trim(), password);
-      onLogin(email.trim(), password);
+      await loginApi(email.trim(), password);
       navigate("/dashboard");
     } catch (err) {
       if (err.response && err.response.data && err.response.data.detail) {

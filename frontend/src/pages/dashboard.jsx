@@ -16,9 +16,8 @@ import {
   Loader2,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar.jsx";
-import authService from "../services/authService.js";
-import accountService from "../services/accountService.js";
-import transactionService from "../services/transactionService.js";
+import { useProfile } from "../hooks/useProfile";
+import * as transactionService from "../services/transactions";
 import "../assets/styles/dashboard.css";
 
 const fmt = (n) =>
@@ -99,42 +98,36 @@ export default function BankDashboard() {
   const [showBalance, setShowBalance] = useState(true);
   const [showDepositModal, setShowDepositModal] = useState(false);
 
+  const { profile, loading: profileLoading } = useProfile();
   const [account, setAccount] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const user = authService.getCurrentUser();
-  const firstName = user?.first_name || "Usuario";
+  const cliente = profile?.cliente;
+  const cuenta = profile?.cuenta;
+  const cuentas = profile?.cuentas;
+  const firstName = cliente?.nombres?.split(" ")[0] || "Usuario";
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // Obtener cuenta activa del localStorage o del backend
-      let activeAccount = authService.getActiveAccount();
-      if (activeAccount?.id_cuenta) {
-        const fresh = await accountService.getAccountById(activeAccount.id_cuenta);
-        activeAccount = fresh;
-        authService.setActiveAccount(fresh);
-      }
-      setAccount(activeAccount);
-
-      if (activeAccount?.id_cuenta) {
-        const txs = await transactionService.getAccountTransactions(activeAccount.id_cuenta);
-        setMovimientos(txs.slice(0, 5)); // Solo los 5 más recientes
+      if (cuenta?.id_cuenta) {
+        const txs = await transactionService.getAccountTransactions(cuenta.id_cuenta);
+        setMovimientos(txs.slice(0, 5));
       }
     } catch (err) {
       console.error("Error cargando datos del dashboard:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [cuenta?.id_cuenta]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const saldo = account ? Number(account.saldo) : 0;
-  const numeroCuenta = account?.numero_cuenta || "";
+  const saldo = cuenta ? Number(cuenta.saldo) : 0;
+  const numeroCuenta = cuenta?.numero_cuenta || "";
   const lastFour = numeroCuenta ? numeroCuenta.slice(-4) : "••••";
 
   const handleAccionClick = (accion) => {
@@ -146,7 +139,7 @@ export default function BankDashboard() {
   };
 
   const formatMovimiento = (m) => {
-    const esIngreso = m.tipo === "DEPOSITO" || (m.tipo === "TRANSFERENCIA" && m.cuenta_destino === account?.id_cuenta);
+    const esIngreso = m.tipo === "DEPOSITO" || (m.tipo === "TRANSFERENCIA" && m.cuenta_destino === cuenta?.id_cuenta);
     return { ...m, esIngreso };
   };
 
@@ -227,7 +220,7 @@ export default function BankDashboard() {
               {!loading && (
                 <div className="balance-trend">
                   <TrendingUp size={12} />
-                  Cuenta {account?.tipo || "AHORROS"}
+                  Cuenta {cuenta?.tipo || "AHORROS"}
                 </div>
               )}
             </div>
@@ -345,5 +338,13 @@ export default function BankDashboard() {
         onSuccess={loadData}
       />
     </div>
+  );
+}
+
+function Topbar({ title }) {
+  return (
+    <header className="topbar">
+      <h1>{title}</h1>
+    </header>
   );
 }

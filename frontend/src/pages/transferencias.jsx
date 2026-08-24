@@ -14,28 +14,14 @@ import {
   CheckCircle2,
   Headphones,
   Lock,
+  Search,
+  Bell,
+  Mail,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar.jsx';
-import authService from '../services/authService.js';
-import accountService from '../services/accountService.js';
-import transactionService from '../services/transactionService.js';
+import { useProfile } from '../hooks/useProfile';
+import * as transactionService from '../services/transactions';
 import '../assets/styles/transferencias.css';
-
-/*
-  BANCHOCÓ BANK — Transferencias
-  --------------------------------------------------
-  Panel/dashboard con sidebar + topbar. La tarjeta de
-  "Nueva transferencia" ocupa todo el ancho (horizontal) y
-  debajo van los paneles de Contactos, Actividad y Límites.
-  El formulario cambia según el tipo de transferencia:
-    - A cuentas Banchocó: buscar contacto / alias.
-    - A otros bancos: nombre, banco (o billetera digital),
-      tipo de cuenta, número, valor y descripción, con regla
-      de dígitos mínimos según el tipo de cuenta destino.
-
-  El sidebar es el componente compartido components/Sidebar.jsx,
-  usado también en Resumen, Retiros, etc.
-*/
 
 const formatCOP = (value) => {
   const num = Number(value) || 0;
@@ -47,24 +33,10 @@ const formatCOP = (value) => {
 };
 
 const TIPOS_TRANSFERENCIA = [
-  {
-    key: 'banchoco',
-    icon: CreditCard,
-    title: 'A cuentas Banchocó',
-    text: 'Cuentas propias o de otros usuarios',
-  },
-  {
-    key: 'ach',
-    icon: Landmark,
-    title: 'A otros bancos',
-    text: 'ACH / PSE',
-  },
+  { key: 'banchoco', icon: CreditCard, title: 'A cuentas Banchocó', text: 'Cuentas propias o de otros usuarios' },
+  { key: 'ach', icon: Landmark, title: 'A otros bancos', text: 'ACH / PSE' },
 ];
 
-// Bancos y billeteras digitales de Colombia.
-// minDigitos es la regla de dígitos mínimos del número destino:
-// las billeteras usan número de celular (10 dígitos) y los
-// bancos el mínimo propio de número de cuenta.
 const BANCOS_COLOMBIA = [
   { id: 'bancolombia', nombre: 'Bancolombia', tipo: 'banco', minDigitos: 11 },
   { id: 'davivienda', nombre: 'Davivienda', tipo: 'banco', minDigitos: 10 },
@@ -89,7 +61,6 @@ const BANCOS_COLOMBIA = [
   { id: 'lulo', nombre: 'Lulo Bank', tipo: 'billetera', minDigitos: 10 },
 ];
 
-// Bancos disponibles para crear contactos (incluye la propia Banchocó).
 const BANCOS_CONTACTO = [
   { id: 'banchoco', nombre: 'Banchocó Bank', tipo: 'banchoco', minDigitos: 10 },
   ...BANCOS_COLOMBIA,
@@ -190,41 +161,35 @@ const ValorField = ({ value, error, disabled, onMontoChange, onQuickAmount, wide
 );
 
 export default function Transferencias() {
+  const { profile, loading: profileLoading } = useProfile();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
-  const [step, setStep] = useState('form'); // 'form' | 'confirm' | 'success'
+  const [step, setStep] = useState('form');
   const [submitting, setSubmitting] = useState(false);
   const [tipoTransferencia, setTipoTransferencia] = useState('banchoco');
-  const [account, setAccount] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
 
-  const loadAccountData = useCallback(async () => {
-    let acc = authService.getActiveAccount();
-    if (acc?.id_cuenta) {
+  const loadData = useCallback(async () => {
+    if (profile?.cuenta?.id_cuenta) {
       try {
-        const fresh = await accountService.getAccountById(acc.id_cuenta);
-        acc = fresh;
-        authService.setActiveAccount(fresh);
-        const txs = await transactionService.getAccountTransactions(fresh.id_cuenta);
+        const txs = await transactionService.getAccountTransactions(profile.cuenta.id_cuenta);
         setMovimientos(txs || []);
       } catch (_) {}
     }
-    setAccount(acc);
-  }, []);
+  }, [profile?.cuenta?.id_cuenta]);
 
   useEffect(() => {
-    loadAccountData();
-  }, [loadAccountData]);
+    loadData();
+  }, [loadData]);
 
-  const numeroCuenta = account?.numero_cuenta || '';
+  const cuenta = profile?.cuenta;
+  const cliente = profile?.cliente;
+  const numeroCuenta = profile?.cuenta?.numero_cuenta || '';
   const lastFour = numeroCuenta ? numeroCuenta.slice(-4) : '••••';
-  const cuentaOrigenLabel = account
-    ? `Cuenta ${account.tipo || 'AHORROS'} •••• ${lastFour}`
-    : 'Sin cuenta';
-  const saldoDisponible = account ? Number(account.saldo) : 0;
-  const user = authService.getCurrentUser();
-  const userName = user?.first_name || 'Usuario';
+  const cuentaOrigenLabel = `Cuenta ${profile?.cuenta?.tipo || 'AHORROS'} •••• ${lastFour}`;
+  const saldoDisponible = profile?.cuenta ? Number(profile.cuenta.saldo) : 0;
+  const firstName = profile?.cliente?.nombres?.split(' ')[0] || 'Usuario';
 
   const [contactos, setContactos] = useState(CONTACTOS_FRECUENTES);
   const [showCreateContact, setShowCreateContact] = useState(false);
@@ -287,6 +252,7 @@ export default function Transferencias() {
       confirmButtonText: 'Sí, continuar',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#0e7a46',
+      cancelButtonColor: '#94A0B4',
     }).then((result) => {
       if (!result.isConfirmed) return;
       const tipo = contacto.bancoId === 'banchoco' ? 'banchoco' : 'ach';
@@ -295,8 +261,7 @@ export default function Transferencias() {
         ...initialForm,
         nombreDestinatario: contacto.nombre,
         banco: tipo === 'ach' ? contacto.bancoId : '',
-        tipoCuenta:
-          tipo === 'ach' && contacto.tipoCuenta !== 'billetera' ? contacto.tipoCuenta : '',
+        tipoCuenta: tipo === 'ach' && contacto.tipoCuenta !== 'billetera' ? contacto.tipoCuenta : '',
         numeroCuenta: tipo === 'ach' ? contacto.numeroCuenta : '',
         cuentaDestino: tipo === 'banchoco' ? contacto.numeroCuenta : '',
       });
@@ -434,13 +399,12 @@ export default function Transferencias() {
         : form.numeroCuenta;
     try {
       await transactionService.transfer({
-        cuenta_origen: numeroCuenta,
+        cuenta_origen: profile?.cuenta?.numero_cuenta,
         cuenta_destino: destino,
         monto: Number(form.monto),
         descripcion: form.descripcion || `Transferencia a ${form.nombreDestinatario}`,
       });
-      await loadAccountData();
-      setStep('success');
+      window.location.reload();
     } catch (err) {
       const detail = err.response?.data?.detail;
       setServerError(
@@ -464,19 +428,14 @@ export default function Transferencias() {
 
   return (
     <div className="tx-page">
-      {/* ================= SIDEBAR ================= */}
       <Sidebar />
-
-      {/* ================= CONTENIDO ================= */}
       <div className="tx-main">
         <header className="tx-topbar">
           <h1 className="tx-topbar__title">Transferencias</h1>
-
           <div className="tx-topbar__search">
             <Search size={16} />
             <input type="text" placeholder="Buscar transacciones, contactos..." />
           </div>
-
           <div className="tx-topbar__actions">
             <button type="button" className="tx-icon-btn" aria-label="Notificaciones">
               <Bell size={18} />
@@ -487,7 +446,7 @@ export default function Transferencias() {
             </button>
             <button type="button" className="tx-user-chip">
               <span className="tx-user-chip__avatar" />
-              <span>Hola, {userName}</span>
+              <span>Hola, {profile?.cliente?.nombres?.split(' ')[0] || 'Usuario'}</span>
               <ChevronDown size={15} />
             </button>
           </div>
@@ -495,7 +454,6 @@ export default function Transferencias() {
 
         <div className="tx-content">
           <div className="tx-grid">
-            {/* ---------- NUEVA TRANSFERENCIA (horizontal) ---------- */}
             <section className="tx-form-card">
               {step !== 'success' && (
                 <>
@@ -707,6 +665,7 @@ export default function Transferencias() {
                             disabled={step === 'confirm'}
                             onMontoChange={handleChange('monto')}
                             onQuickAmount={handleQuickAmount}
+                            wide
                           />
 
                           <div className="field tx-field--full">
@@ -818,7 +777,6 @@ export default function Transferencias() {
               )}
             </section>
 
-            {/* ---------- CONTACTOS ---------- */}
             <section className="tx-panel">
               <div className="tx-panel__header">
                 <h3>Contactos frecuentes</h3>
@@ -963,7 +921,6 @@ export default function Transferencias() {
               </div>
             </section>
 
-            {/* ---------- ACTIVIDAD RECIENTE ---------- */}
             <section className="tx-panel">
               <div className="tx-panel__header">
                 <h3>Actividad reciente</h3>
@@ -976,7 +933,7 @@ export default function Transferencias() {
                   movimientos.slice(0, 5).map((m) => {
                     const esIngreso =
                       m.tipo === 'DEPOSITO' ||
-                      (m.tipo === 'TRANSFERENCIA' && m.cuenta_destino === account?.id_cuenta);
+                      (m.tipo === 'TRANSFERENCIA' && m.cuenta_destino === profile?.cuenta?.id_cuenta);
                     const titulo = m.descripcion || m.tipo;
                     const fecha = m.fecha
                       ? new Date(m.fecha).toLocaleString('es-CO', {
@@ -1006,7 +963,6 @@ export default function Transferencias() {
               </div>
             </section>
 
-            {/* ---------- LÍMITES ---------- */}
             <section className="tx-panel">
               <div className="tx-panel__header">
                 <h3>Límites de transferencia</h3>
@@ -1040,7 +996,6 @@ export default function Transferencias() {
             </section>
           </div>
 
-          {/* ---------- FOOTER DE CONFIANZA ---------- */}
           <section className="tx-trust-footer">
             {TRUST_FOOTER.map(({ icon: Icon, title, text, cta }) => (
               <div className="tx-trust-item" key={title}>

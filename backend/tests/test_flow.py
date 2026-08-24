@@ -7,9 +7,13 @@ client = TestClient(app)
 
 
 def test_full_banking_flow():
+    # Use unique identifiers to avoid conflicts with existing data
+    import time
+    unique_suffix = int(time.time() * 1000)
+    
     # 1. Register User 1
-    user1_email = "ana.flow@banchoco.com"
-    user1_doc = "1099887701"
+    user1_email = f"ana.flow.{unique_suffix}@banchoco.com"
+    user1_doc = f"109988{unique_suffix % 100000:05d}"
     reg1_payload = {
         "nombres": "Ana",
         "apellidos": "Gómez",
@@ -84,8 +88,8 @@ def test_full_banking_flow():
     assert Decimal(str(acc_res.json()["saldo"])) == Decimal("400000.00")
 
     # 6. Register User 2 to test transfer
-    user2_email = "pedro.flow@banchoco.com"
-    user2_doc = "1099887702"
+    user2_email = f"pedro.flow.{unique_suffix}@banchoco.com"
+    user2_doc = f"109988{(unique_suffix + 1) % 100000:05d}"
     reg2_payload = {
         "nombres": "Pedro",
         "apellidos": "Murillo",

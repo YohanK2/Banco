@@ -21,6 +21,8 @@ import "../assets/styles/registro.css";
 
 import authService from "../services/authService.js";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function validate({
 
   nombres,

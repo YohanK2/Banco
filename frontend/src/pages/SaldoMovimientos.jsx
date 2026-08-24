@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye,
@@ -10,8 +10,8 @@ import {
   Loader2,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar.jsx";
-import authService from "../services/authService.js";
-import transactionService from "../services/transactionService.js";
+import { useProfile } from "../hooks/useProfile";
+import * as transactionService from "../services/transactions";
 import "../assets/styles/SaldoMovimientos.css";
 
 const fmt = (n) =>
@@ -24,6 +24,7 @@ const TIPO_ICON = {
 };
 
 export default function SaldoMovimientos() {
+  const { profile, loading: profileLoading } = useProfile();
   const [showBalance, setShowBalance] = useState(true);
   const [account, setAccount] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
@@ -32,12 +33,10 @@ export default function SaldoMovimientos() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const acc = authService.getActiveAccount();
-      if (acc?.id_cuenta) {
-        const statement = await transactionService.getAccountStatement(acc.id_cuenta);
-        const cuenta = statement.cuenta || acc;
-        authService.setActiveAccount(cuenta);
-        setAccount(cuenta);
+      const cuenta = profile?.cuenta;
+      if (cuenta?.id_cuenta) {
+        const statement = await transactionService.getAccountStatement(cuenta.id_cuenta);
+        setAccount(statement.cuenta);
         setMovimientos(statement.movimientos || []);
       }
     } catch (err) {
@@ -45,21 +44,24 @@ export default function SaldoMovimientos() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile?.cuenta?.id_cuenta]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const saldo = account ? Number(account.saldo) : 0;
+  const cuenta = profile?.cuenta;
+  const saldo = cuenta ? Number(cuenta.saldo) : 0;
+  const numeroCuenta = cuenta?.numero_cuenta || "";
+  const lastFour = numeroCuenta ? numeroCuenta.slice(-4) : "••••";
 
   return (
     <div className="saldo-page">
       <Sidebar />
 
       <main className="saldo-main">
-        {/* TOPBAR COMPARTIDO */}
         <Topbar title="Saldo y movimientos" />
 
-        {/* SALUDO */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,7 +72,6 @@ export default function SaldoMovimientos() {
           <h1 className="greeting__title">Saldo y movimientos</h1>
         </motion.div>
 
-        {/* SALDO */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -113,10 +114,10 @@ export default function SaldoMovimientos() {
                 </button>
               </div>
 
-              {!loading && account && (
+              {!loading && cuenta && (
                 <div className="balance-trend">
                   <TrendingUp size={12} />
-                  Cuenta {account.tipo || "AHORROS"} · •••• {account.numero_cuenta?.slice(-4)}
+                  Cuenta {cuenta.tipo || "AHORROS"} · •••• {cuenta.numero_cuenta?.slice(-4)}
                 </div>
               )}
             </div>
@@ -128,7 +129,6 @@ export default function SaldoMovimientos() {
           </div>
         </motion.div>
 
-        {/* MOVIMIENTOS */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,7 +151,7 @@ export default function SaldoMovimientos() {
           ) : (
             <div>
               {movimientos.map((m, i) => {
-                const esIngreso = m.tipo === "DEPOSITO" || (m.tipo === "TRANSFERENCIA" && m.cuenta_destino === account?.id_cuenta);
+                const esIngreso = m.tipo === "DEPOSITO" || (m.tipo === "TRANSFERENCIA" && m.cuenta_destino === profile?.cuenta?.id_cuenta);
                 const Icon = TIPO_ICON[m.tipo] || ArrowRightLeft;
                 return (
                   <motion.div
@@ -197,5 +197,13 @@ export default function SaldoMovimientos() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+function Topbar({ title }) {
+  return (
+    <header className="topbar">
+      <h1>{title}</h1>
+    </header>
   );
 }

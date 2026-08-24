@@ -119,43 +119,8 @@ const BanchocoSidebar = () => {
           ))}
         </nav>
 
-        <div className="sb-promo">
-          <p className="sb-promo__title">Invita y gana</p>
-          <p className="sb-promo__text">
-            Gana hasta $50.000 por cada amigo que abra su cuenta.
-          </p>
-          <button type="button" className="sb-promo__btn">
-            Invitar amigos
-          </button>
-        </div>
-
         <div className="sb-user">
           <div className="sb-user__wrap" ref={menuRef}>
-            <button
-              type="button"
-              className={`sb-user__chip ${menuOpen ? "is-open" : ""}`}
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-expanded={menuOpen}
-              aria-haspopup="menu"
-            >
-              <span className="sb-user__avatar">
-                {loading ? <span className="sb-user__skeleton" /> : getInitials(profile)}
-              </span>
-              <span className="sb-user__info">
-                {loading ? (
-                  <>
-                    <strong className="sb-user__skeleton sb-user__skeleton--name" />
-                    <small className="sb-user__skeleton sb-user__skeleton--mail" />
-                  </>
-                ) : (
-                  <>
-                    <strong>{getFullName(profile)}</strong>
-                    <small>{getEmail(profile)}</small>
-                  </>
-                )}
-              </span>
-              <ChevronDown size={15} className="sb-user__chevron" />
-            </button>
 
             {menuOpen && (
               <div className="tb-menu tb-menu--sidebar" role="menu">

@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
-import Topbar from '../components/Topbar.jsx';
 import {
   ChevronDown,
   Download,
@@ -16,9 +15,12 @@ import {
   ChevronRight,
   ShieldCheck,
   Loader2,
+  Search,
+  Bell,
+  Mail,
 } from 'lucide-react';
-import authService from '../services/authService.js';
-import transactionService from '../services/transactionService.js';
+import { useProfile } from '../hooks/useProfile';
+import * as transactionService from '../services/transactions';
 import '../assets/styles/historial.css';
 
 const formatCOP = (value) => {
@@ -53,7 +55,7 @@ const esIngresoMovimiento = (m, accountId) =>
   m.tipo === 'DEPOSITO' || (m.tipo === 'TRANSFERENCIA' && m.cuenta_destino === accountId);
 
 export default function Historial() {
-  const [account, setAccount] = useState(null);
+  const { profile, loading: profileLoading } = useProfile();
   const [allMovimientos, setAllMovimientos] = useState([]);
   const [totales, setTotales] = useState({ ingresos: 0, gastos: 0 });
   const [loading, setLoading] = useState(true);
@@ -68,17 +70,14 @@ export default function Historial() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const acc = authService.getActiveAccount();
-      if (!acc?.id_cuenta) {
-        setAccount(null);
+      const cuenta = profile?.cuenta;
+      if (!cuenta?.id_cuenta) {
         setAllMovimientos([]);
+        setTotales({ ingresos: 0, gastos: 0 });
         return;
       }
 
-      const statement = await transactionService.getAccountStatement(acc.id_cuenta);
-      const cuenta = statement.cuenta || acc;
-      authService.setActiveAccount(cuenta);
-      setAccount(cuenta);
+      const statement = await transactionService.getAccountStatement(cuenta.id_cuenta);
       setAllMovimientos(statement.movimientos || []);
 
       const ingresos =
@@ -93,7 +92,7 @@ export default function Historial() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [profile?.cuenta?.id_cuenta]);
 
   useEffect(() => {
     loadData();
@@ -106,15 +105,16 @@ export default function Historial() {
   const handleFiltrar = () => setFiltros(pendiente);
 
   const movimientosFiltrados = useMemo(() => {
+    const accountId = profile?.cuenta?.id_cuenta;
     return allMovimientos.filter((m) => {
-      const signo = esIngresoMovimiento(m, account?.id_cuenta) ? 'ingreso' : 'gasto';
+      const signo = esIngresoMovimiento(m, accountId) ? 'ingreso' : 'gasto';
       if (filtros.tipo !== 'todos' && signo !== filtros.tipo) return false;
       const fechaIso = m.fecha ? String(m.fecha).slice(0, 10) : '';
       if (filtros.desde && fechaIso < filtros.desde) return false;
       if (filtros.hasta && fechaIso > filtros.hasta) return false;
       return true;
     });
-  }, [filtros, allMovimientos, account]);
+  }, [filtros, allMovimientos, profile?.cuenta?.id_cuenta]);
 
   const grupos = useMemo(() => {
     const out = [];
@@ -141,12 +141,13 @@ export default function Historial() {
   const resumenFiltrado = useMemo(() => {
     let ingresos = 0;
     let gastos = 0;
+    const accountId = profile?.cuenta?.id_cuenta;
     movimientosFiltrados.forEach((m) => {
-      if (esIngresoMovimiento(m, account?.id_cuenta)) ingresos += Number(m.monto);
+      if (esIngresoMovimiento(m, accountId)) ingresos += Number(m.monto);
       else gastos += Number(m.monto);
     });
     return { ingresos, gastos, total: movimientosFiltrados.length };
-  }, [movimientosFiltrados, account]);
+  }, [movimientosFiltrados, profile?.cuenta?.id_cuenta]);
 
   const filtrosPorDefecto =
     filtros.tipo === 'todos' &&
@@ -157,11 +158,10 @@ export default function Historial() {
   const gastosMostrados = filtrosPorDefecto ? totales.gastos : resumenFiltrado.gastos;
 
   const hayResultados = movimientosFiltrados.length > 0;
-  const cuentaLabel = account
-    ? `Cuenta ${account.tipo || 'AHORROS'} •••• ${String(account.numero_cuenta || '').slice(-4)}`
+  const cuenta = profile?.cuenta;
+  const cuentaLabel = cuenta
+    ? `Cuenta ${cuenta.tipo || 'AHORROS'} •••• ${String(cuenta.numero_cuenta || '').slice(-4)}`
     : 'Sin cuenta';
-  const user = authService.getCurrentUser();
-  const userName = user ? `${user.first_name}` : 'Usuario';
 
   return (
     <div className="hs-page">
@@ -183,7 +183,7 @@ export default function Historial() {
             </button>
             <button type="button" className="hs-user-chip">
               <span className="hs-user-chip__avatar" />
-              <span>Hola, {userName}</span>
+              <span>Hola, {profile?.cliente?.nombres?.split(' ')[0] || 'Usuario'}</span>
               <ChevronDown size={15} />
             </button>
           </div>
@@ -226,8 +226,8 @@ export default function Historial() {
                 <PieChart size={16} />
               </span>
               <p className="hs-stat-card__label">Saldo actual</p>
-              <p className="hs-stat-card__value">{loading || !account ? '—' : formatCOP(account.saldo)}</p>
-              <p className="hs-stat-card__meta">{account ? cuentaLabel : '—'}</p>
+              <p className="hs-stat-card__value">{loading || !profile?.cuenta ? '—' : formatCOP(profile.cuenta.saldo)}</p>
+              <p className="hs-stat-card__meta">{profile?.cuenta ? `Cuenta ${profile.cuenta.tipo || 'AHORROS'} •••• ${String(profile.cuenta.numero_cuenta || '').slice(-4)}` : '—'}</p>
             </div>
 
             <div className="hs-stat-card">
@@ -245,8 +245,8 @@ export default function Historial() {
               <label>Cuenta</label>
               <div className="hs-account-pill">
                 <div>
-                  <strong>{loading ? 'Cargando…' : cuentaLabel}</strong>
-                  <span>Saldo disponible: {account ? formatCOP(account.saldo) : '—'}</span>
+                  <strong>{loading ? 'Cargando…' : `Cuenta ${profile?.cuenta?.tipo || 'AHORROS'} •••• ${String(profile?.cuenta?.numero_cuenta || '').slice(-4)}`}</strong>
+                  <span>Saldo disponible: {profile?.cuenta ? formatCOP(profile.cuenta.saldo) : '—'}</span>
                 </div>
                 <ChevronDown size={15} />
               </div>
@@ -324,7 +324,8 @@ export default function Historial() {
                   <div key={g.grupo} className="hs-group">
                     <p className="hs-group__label">{g.grupo}</p>
                     {g.items.map((m) => {
-                      const esIngreso = esIngresoMovimiento(m, account?.id_cuenta);
+                      const accountId = profile?.cuenta?.id_cuenta;
+                      const esIngreso = esIngresoMovimiento(m, accountId);
                       const tipoEstilo = TIPO_ESTILO[m.tipo] || { label: m.tipo, tone: 'blue' };
                       const hora = m.fecha
                         ? new Date(m.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })

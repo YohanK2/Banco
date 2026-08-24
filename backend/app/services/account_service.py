@@ -120,3 +120,14 @@ def update_account_state(
         return None
     db.refresh(cuenta)
     return AccountResponse.model_validate(cuenta)
+
+
+def get_accounts_by_client(db: Session, client_id: int) -> List[AccountResponse]:
+    """Devuelve todas las cuentas de un cliente, ordenadas por id."""
+    cuentas = (
+        db.query(Cuenta)
+        .filter(Cuenta.id_cliente == client_id)
+        .order_by(Cuenta.id_cuenta)
+        .all()
+    )
+    return [AccountResponse.model_validate(c) for c in cuentas]

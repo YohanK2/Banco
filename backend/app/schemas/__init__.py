@@ -3,7 +3,6 @@ from app.schemas.account import AccountCreate, AccountUpdate, AccountResponse
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.schemas.auth import (
     LoginRequest,
-    TokenResponse,
     RefreshTokenRequest,
     RegisterRequest,
     RegisterResponse,
@@ -27,7 +26,6 @@ __all__ = [
     "UserUpdate",
     "UserResponse",
     "LoginRequest",
-    "TokenResponse",
     "RefreshTokenRequest",
     "RegisterRequest",
     "RegisterResponse",
