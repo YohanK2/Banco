@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, ShieldCheck, ArrowRight } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
+import { login as loginApi, getSession } from "../services/auth";
 import "../assets/styles/login.css";
 
 
@@ -43,24 +52,41 @@ export function validate({ email, password }) {
   return errors;
 }
 
-export default function BanchocoLogin({ onLogin = () => {} }) {
+export default function BanchocoLogin({ onLogin }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (getSession()) navigate("/dashboard");
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setServerError("");
     const nextErrors = validate({ email, password });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
     try {
-      await onLogin(email.trim(), password);
+      if (onLogin) {
+        await onLogin(email.trim(), password);
+      } else {
+        await loginApi(email.trim(), password);
+      }
       navigate("/dashboard");
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setServerError(
+        typeof detail === "string"
+          ? detail
+          : "No pudimos conectar con el servidor bancario. Inténtalo de nuevo."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -130,6 +156,13 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
           <span className="bl-form__eyebrow">Bienvenido de nuevo</span>
           <h1 className="bl-form__title">Iniciar sesión</h1>
           <p className="bl-form__subtitle">Ingresa tus datos para ver tu cuenta.</p>
+
+          {serverError && (
+            <div className="bl-alert" role="alert">
+              <AlertCircle size={17} />
+              <span>{serverError}</span>
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="email" className="field__label">Correo</label>

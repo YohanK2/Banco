@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
+import Topbar from '../components/Topbar.jsx';
 import {
-  Search,
-  Bell,
-  Mail,
   ChevronDown,
   Download,
   TrendingUp,
@@ -24,6 +22,7 @@ import {
   ChevronRight,
   ShieldCheck,
 } from 'lucide-react';
+import '../assets/styles/topbar.css';
 import '../assets/styles/historial.css';
 
 /*
@@ -153,28 +152,7 @@ export default function Historial() {
       <Sidebar />
 
       <div className="hs-main">
-        <header className="hs-topbar">
-          <div className="hs-topbar__search">
-            <Search size={16} />
-            <input type="text" placeholder="Buscar transacciones, contactos..." />
-          </div>
-
-          <div className="hs-topbar__actions">
-            <button type="button" className="hs-icon-btn" aria-label="Notificaciones">
-              <Bell size={18} />
-              <span className="hs-icon-badge-count">5</span>
-            </button>
-            <button type="button" className="hs-icon-btn" aria-label="Mensajes">
-              <Mail size={18} />
-              <span className="hs-icon-badge-count">3</span>
-            </button>
-            <button type="button" className="hs-user-chip">
-              <span className="hs-user-chip__avatar" />
-              <span>Hola, Juan</span>
-              <ChevronDown size={15} />
-            </button>
-          </div>
-        </header>
+        <Topbar title="Historial" />
 
         <div className="hs-content">
           <div className="hs-page-header">

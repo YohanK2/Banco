@@ -1,4 +1,5 @@
 from decimal import Decimal
+import secrets
 from typing import Optional, Tuple
 
 from sqlalchemy.exc import IntegrityError
@@ -6,11 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.models import Cliente, Cuenta, Usuario
 from app.schemas.account import AccountResponse
-from app.schemas.auth import RegisterRequest, RegisterResponse
+from app.schemas.auth import LoginResponse, RegisterRequest, RegisterResponse
 from app.schemas.client import ClientResponse
 from app.schemas.user import UserResponse
 from app.services.account_service import generate_account_number
-from app.utils.security import hash_password
+from app.utils.security import hash_password, verify_password
 
 
 def register_client(
@@ -97,5 +98,52 @@ def register_client(
         return None, "DB_ERROR"
     except Exception:
         db.rollback()
+        return None, "DB_ERROR"
+
+
+def login_user(
+    db: Session, correo: str, contrasena: str
+) -> Tuple[Optional[LoginResponse], Optional[str]]:
+    """
+    Autentica a un usuario por correo y contraseña.
+
+    Retorna:
+    - (LoginResponse, None) si las credenciales son válidas.
+    - (None, "INVALID_CREDENTIALS") si el correo no existe o la contraseña no coincide.
+    - (None, "USER_DISABLED") si el usuario está inactivo.
+    - (None, "DB_ERROR") ante cualquier fallo de base de datos.
+    """
+    try:
+        usuario = (
+            db.query(Usuario)
+            .filter(Usuario.correo == correo.strip().lower())
+            .first()
+        )
+        if usuario is None or not verify_password(contrasena, usuario.contrasena_hash):
+            return None, "INVALID_CREDENTIALS"
+
+        if not usuario.estado:
+            return None, "USER_DISABLED"
+
+        cliente = (
+            db.query(Cliente).filter(Cliente.id_usuario == usuario.id_usuario).first()
+        )
+        cuenta = None
+        if cliente is not None:
+            cuenta = (
+                db.query(Cuenta)
+                .filter(Cuenta.id_cliente == cliente.id_cliente)
+                .first()
+            )
+
+        resultado = LoginResponse(
+            access_token=secrets.token_hex(32),
+            usuario=UserResponse.model_validate(usuario),
+            cliente=ClientResponse.model_validate(cliente) if cliente else None,
+            cuenta=AccountResponse.model_validate(cuenta) if cuenta else None,
+        )
+        return resultado, None
+
+    except Exception:
         return None, "DB_ERROR"
 

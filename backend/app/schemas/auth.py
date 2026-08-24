@@ -54,3 +54,11 @@ class RegisterResponse(BaseModel):
     cuenta: AccountResponse
 
 
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UserResponse
+    cliente: Optional[ClientResponse] = None
+    cuenta: Optional[AccountResponse] = None
+
+

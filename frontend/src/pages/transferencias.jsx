@@ -6,9 +6,6 @@ import {
   CreditCard,
   Landmark,
   ShieldCheck,
-  Search,
-  Bell,
-  Mail,
   ChevronDown,
   ChevronRight,
   Star,
@@ -20,6 +17,8 @@ import {
   Lock,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar.jsx';
+import Topbar from '../components/Topbar.jsx';
+import { useNotifications } from '../context/NotificationsContext.jsx';
 import '../assets/styles/transferencias.css';
 
 /*
@@ -209,6 +208,7 @@ export default function Transferencias() {
   const [step, setStep] = useState('form'); // 'form' | 'confirm' | 'success'
   const [submitting, setSubmitting] = useState(false);
   const [tipoTransferencia, setTipoTransferencia] = useState('banchoco');
+  const { pushNotification } = useNotifications();
 
   const [contactos, setContactos] = useState(CONTACTOS_FRECUENTES);
   const [showCreateContact, setShowCreateContact] = useState(false);
@@ -412,6 +412,14 @@ export default function Transferencias() {
     await new Promise((resolve) => setTimeout(resolve, 900));
     setSubmitting(false);
     setStep('success');
+    pushNotification({
+      type: 'money_out',
+      title: 'Enviaste dinero',
+      description: `Transferencia a ${form.nombreDestinatario}${
+        form.descripcion ? ` · ${form.descripcion}` : ''
+      }`,
+      amount: Number(form.monto) || 0,
+    });
   };
 
   const handleNuevaTransferencia = () => {
@@ -429,29 +437,7 @@ export default function Transferencias() {
 
       {/* ================= CONTENIDO ================= */}
       <div className="tx-main">
-        <header className="tx-topbar">
-          <h1 className="tx-topbar__title">Transferencias</h1>
-
-          <div className="tx-topbar__search">
-            <Search size={16} />
-            <input type="text" placeholder="Buscar transacciones, contactos..." />
-          </div>
-
-          <div className="tx-topbar__actions">
-            <button type="button" className="tx-icon-btn" aria-label="Notificaciones">
-              <Bell size={18} />
-              <span className="tx-icon-dot" />
-            </button>
-            <button type="button" className="tx-icon-btn" aria-label="Mensajes">
-              <Mail size={18} />
-            </button>
-            <button type="button" className="tx-user-chip">
-              <span className="tx-user-chip__avatar" />
-              <span>Hola, Juan</span>
-              <ChevronDown size={15} />
-            </button>
-          </div>
-        </header>
+        <Topbar title="Transferencias" />
 
         <div className="tx-content">
           <div className="tx-grid">

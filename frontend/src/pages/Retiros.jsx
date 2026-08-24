@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
+import Topbar from '../components/Topbar.jsx';
+import { useNotifications } from '../context/NotificationsContext.jsx';
+import '../assets/styles/topbar.css';
 import '../assets/styles/retiros.css';
 
 const formatCOP = (value) => {
@@ -26,6 +29,7 @@ export default function Retiros() {
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState('form'); // 'form' | 'confirm' | 'success'
   const [submitting, setSubmitting] = useState(false);
+  const { pushNotification } = useNotifications();
 
   const cuentaSeleccionada = cuentasDisponibles.find((c) => c.id === form.cuenta);
   const saldoDisponible = cuentaSeleccionada?.saldo ?? 0;
@@ -65,6 +69,12 @@ export default function Retiros() {
     await new Promise((resolve) => setTimeout(resolve, 900));
     setSubmitting(false);
     setStep('success');
+    pushNotification({
+      type: 'money_out',
+      title: 'Retiraste dinero',
+      description: 'Retiro desde tu cuenta Banchocó',
+      amount: Number(form.monto) || 0,
+    });
   };
 
   const handleNuevoRetiro = () => {
@@ -79,7 +89,9 @@ export default function Retiros() {
   return (
     <div className="withdraw-page">
       <Sidebar />
-      <div className="withdraw-grid">
+      <div className="withdraw-body">
+        <Topbar title="Retiros" />
+        <div className="withdraw-grid">
         <section className="withdraw-card">
           {step !== 'success' && (
             <>
@@ -203,6 +215,7 @@ export default function Retiros() {
               : 'Borrador'}
           </p>
         </aside>
+        </div>
       </div>
     </div>
   );

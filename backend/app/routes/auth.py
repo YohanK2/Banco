@@ -2,10 +2,51 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
-from app.schemas.auth import RegisterRequest, RegisterResponse
-from app.services.auth_service import register_client
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RegisterResponse,
+)
+from app.services.auth_service import login_user, register_client
 
 router = APIRouter(prefix="/auth", tags=["Autenticación y Registro"])
+
+
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    summary="Inicio de sesión",
+    description=(
+        "Valida las credenciales del usuario y devuelve el token de sesión "
+        "junto con los datos del usuario, cliente y cuenta bancaria."
+    ),
+)
+def login_endpoint(
+    credentials: LoginRequest,
+    db: Session = Depends(get_db),
+):
+    resultado, error = login_user(db, credentials.correo, credentials.contrasena)
+
+    if error == "INVALID_CREDENTIALS":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Correo o contraseña incorrectos.",
+        )
+
+    if error == "USER_DISABLED":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="El usuario se encuentra inactivo.",
+        )
+
+    if error == "DB_ERROR" or resultado is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ocurrió un error interno al iniciar sesión.",
+        )
+
+    return resultado
 
 
 

@@ -13,6 +13,8 @@ import {
   Zap,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar.jsx";
+import Topbar from "../components/Topbar.jsx";
+import "../assets/styles/topbar.css";
 import "../assets/styles/SaldoMovimientos.css";
 
 const fmt = (n) =>
@@ -46,6 +48,9 @@ export default function SaldoMovimientos() {
       <Sidebar />
 
       <main className="saldo-main">
+        {/* TOPBAR COMPARTIDO */}
+        <Topbar title="Saldo y movimientos" />
+
         {/* SALUDO */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}

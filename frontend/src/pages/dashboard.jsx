@@ -19,6 +19,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar.jsx";
+import Topbar from "../components/Topbar.jsx";
+import "../assets/styles/topbar.css";
 import "../assets/styles/dashboard.css";
 
 /*
@@ -139,6 +141,9 @@ export default function BankDashboard() {
       <Sidebar />
 
       <main className="main">
+        {/* TOPBAR COMPARTIDO */}
+        <Topbar title="Resumen" />
+
         {/* SALUDO */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}

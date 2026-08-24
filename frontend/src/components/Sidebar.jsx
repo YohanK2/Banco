@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import {
@@ -10,17 +10,29 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 import "../assets/styles/Sidebar.css";
+import "../assets/styles/topbar.css";
+import { useProfile } from "../hooks/useProfile";
+import { clearSession } from "../services/auth";
+import {
+  USER_MENU_ITEMS,
+  getFullName,
+  getInitials,
+  getEmail,
+  useOutsideClose,
+} from "./UserMenu.jsx";
+import NotificationsModal from "./NotificationsModal.jsx";
 
 /*
   BANCHOCÓ BANK — sidebar compartido
   --------------------------------------------------
-  Sidebar de panel (estilo transferencias) reutilizable en
-  todas las páginas de la sesión. En escritorio es una columna
-  fija a la izquierda con marca, navegación, promoción y cierre
-  de sesión; en móvil se oculta y aparece una barra superior con
-  menú desplegable.
+  Sidebar de panel reutilizable en todas las páginas de la
+  sesión. El chip de usuario espera los datos del backend
+  (GET /users/{id} + GET /clients/{id}) y muestra el nombre
+  real de quien inició sesión. La flechita dentro del chip
+  despliega: Mi perfil, Configuraciones y Notificaciones.
 */
 
 const NAV_LINKS = [
@@ -32,27 +44,26 @@ const NAV_LINKS = [
 ];
 
 const BanchocoSidebar = () => {
-  const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile, loading } = useProfile();
 
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    setUser(userData ? JSON.parse(userData) : null);
-  }, [location]);
+  const menuRef = useRef(null);
+  useOutsideClose(menuRef, menuOpen ? () => setMenuOpen(false) : null);
 
-  const getUserName = () => {
-    if (!user) return "Usuario";
-    return user.first_name || user.email || "Usuario";
-  };
-
-  const getUserInitials = () => {
-    if (!user) return "U";
-    const a = user.first_name?.charAt(0) || "";
-    const b = user.last_name?.charAt(0) || "";
-    return (a + b).toUpperCase() || "U";
+  const handleMenuAction = (item) => {
+    if (item.action === "notifications") {
+      setMenuOpen(false);
+      setShowNotifications(true);
+      return;
+    }
+    if (item.to) {
+      setMenuOpen(false);
+      navigate(item.to);
+    }
   };
 
   const isActive = (path) => location.pathname === path;
@@ -69,8 +80,7 @@ const BanchocoSidebar = () => {
       cancelButtonText: "No, mantenerme aquí",
     }).then((result) => {
       if (result.isConfirmed) {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
+        clearSession();
         Swal.fire({
           title: "Sesión cerrada",
           text: "Has salido correctamente.",
@@ -118,13 +128,55 @@ const BanchocoSidebar = () => {
         </div>
 
         <div className="sb-user">
-          <div className="sb-user__chip">
-            <span className="sb-user__avatar">{getUserInitials()}</span>
-            <span className="sb-user__info">
-              <strong>{getUserName()}</strong>
-              <small>{user?.email || ""}</small>
-            </span>
+          <div className="sb-user__wrap" ref={menuRef}>
+            <button
+              type="button"
+              className={`sb-user__chip ${menuOpen ? "is-open" : ""}`}
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+            >
+              <span className="sb-user__avatar">
+                {loading ? <span className="sb-user__skeleton" /> : getInitials(profile)}
+              </span>
+              <span className="sb-user__info">
+                {loading ? (
+                  <>
+                    <strong className="sb-user__skeleton sb-user__skeleton--name" />
+                    <small className="sb-user__skeleton sb-user__skeleton--mail" />
+                  </>
+                ) : (
+                  <>
+                    <strong>{getFullName(profile)}</strong>
+                    <small>{getEmail(profile)}</small>
+                  </>
+                )}
+              </span>
+              <ChevronDown size={15} className="sb-user__chevron" />
+            </button>
+
+            {menuOpen && (
+              <div className="tb-menu tb-menu--sidebar" role="menu">
+                <div className="tb-menu__head">
+                  <strong>{loading ? "Cargando…" : getFullName(profile)}</strong>
+                  <small>{getEmail(profile)}</small>
+                </div>
+                {USER_MENU_ITEMS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="menuitem"
+                    className="tb-menu__item"
+                    onClick={() => handleMenuAction(item)}
+                  >
+                    <item.icon size={16} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
           <button type="button" className="sb-logout" onClick={handleLogout}>
             <LogOut size={16} />
             <span>Cerrar sesión</span>
@@ -166,12 +218,33 @@ const BanchocoSidebar = () => {
             </Link>
           ))}
           <div className="sb-mobile-divider" />
+          {USER_MENU_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="sb-mobile-link"
+              onClick={() =>
+                item.action === "notifications"
+                  ? setShowNotifications(true)
+                  : handleMenuAction(item)
+              }
+            >
+              <item.icon size={17} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+          <div className="sb-mobile-divider" />
           <button className="sb-mobile-link sb-mobile-logout" onClick={handleLogout}>
             <LogOut size={17} />
             <span>Cerrar sesión</span>
           </button>
         </div>
       )}
+
+      <NotificationsModal
+        open={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </>
   );
 };
