@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import {
   Search,
@@ -12,34 +12,16 @@ import {
   Receipt,
   Calendar,
   ArrowLeftRight,
-  ShoppingBag,
-  Wallet,
-  Film,
-  Zap,
-  Utensils,
   ArrowUp,
   ArrowDown,
   MoreVertical,
-  ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
+import authService from '../services/authService.js';
+import transactionService from '../services/transactionService.js';
 import '../assets/styles/historial.css';
-
-/*
-  BANCHOCÓ BANK — Historial
-  --------------------------------------------------
-  Vista de panel: topbar de búsqueda, tarjetas resumen del
-  periodo, barra de filtros (cuenta, tipo, categoría, rango de
-  fechas) y el detalle de movimientos agrupado por día, tal
-  como en la referencia visual.
-
-  Los totales de las tarjetas resumen (ingresos, gastos, saldo,
-  transacciones) normalmente vendrían del backend ya
-  agregados para el periodo filtrado; aquí quedan como
-  constantes de ejemplo (RESUMEN_PERIODO) para que los
-  reemplaces por la respuesta real de tu API.
-*/
 
 const formatCOP = (value) => {
   const num = Number(value) || 0;
@@ -50,72 +32,74 @@ const formatCOP = (value) => {
   }).format(Math.abs(num));
 };
 
-const CUENTA_ORIGEN = {
-  nombre: 'Cuenta Corriente •••• 4589',
-  saldo: 7250000,
-};
-
-const RESUMEN_PERIODO = {
-  ingresos: { valor: 18650000, transacciones: 68, variacion: 15.7, direccion: 'up' },
-  gastos: { valor: 12890000, transacciones: 92, variacion: 8.4, direccion: 'down' },
-  saldoFinal: { valor: 5760000, fecha: 'Al 31 de mayo de 2026' },
-  totalTransacciones: { valor: 160, rango: 'Entre 1 may. y 31 may. 2026' },
-};
-
-const CATEGORIA_STYLE = {
-  transferencia: { label: 'Transferencia', icon: ArrowLeftRight, tone: 'blue' },
-  compras: { label: 'Compras', icon: ShoppingBag, tone: 'orange' },
-  ingreso: { label: 'Ingreso', icon: Wallet, tone: 'green' },
-  entretenimiento: { label: 'Entretenimiento', icon: Film, tone: 'purple' },
-  servicios: { label: 'Servicios', icon: Zap, tone: 'amber' },
-  alimentacion: { label: 'Alimentación', icon: Utensils, tone: 'pink' },
-};
-
 const TIPO_OPTIONS = [
   { id: 'todos', label: 'Todos' },
   { id: 'ingreso', label: 'Ingreso' },
   { id: 'gasto', label: 'Gasto' },
 ];
 
-const CATEGORIA_OPTIONS = [
-  { id: 'todas', label: 'Todas' },
-  ...Object.entries(CATEGORIA_STYLE).map(([id, c]) => ({ id, label: c.label })),
-];
+const TIPO_ESTILO = {
+  DEPOSITO: { label: 'Depósito', tone: 'green' },
+  RETIRO: { label: 'Retiro', tone: 'coral' },
+  TRANSFERENCIA: { label: 'Transferencia', tone: 'blue' },
+};
 
-// En un proyecto real esto vendría paginado desde el backend.
-const MOVIMIENTOS_DEMO = [
-  { id: 'm1', grupo: 'Hoy • 31 de mayo de 2026', fecha: '2026-05-31', hora: '10:30 a.m.', titulo: 'Transferencia a María Paula', subtitulo: 'Ahorros •••• 1234', categoria: 'transferencia', signo: 'gasto', monto: 200000, saldo: 7250000 },
-  { id: 'm2', grupo: 'Hoy • 31 de mayo de 2026', fecha: '2026-05-31', hora: '9:15 a.m.', titulo: 'Pago en Supermercado Éxito', subtitulo: 'Tarjeta de débito •••• 4589', categoria: 'compras', signo: 'gasto', monto: 85600, saldo: 7450000 },
-  { id: 'm3', grupo: 'Hoy • 31 de mayo de 2026', fecha: '2026-05-31', hora: '8:00 a.m.', titulo: 'Nómina recibida', subtitulo: 'Empresa S.A.', categoria: 'ingreso', signo: 'ingreso', monto: 2850000, saldo: 7535600 },
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const thirtyDaysAgo = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 30);
+  return d.toISOString().slice(0, 10);
+};
 
-  { id: 'm4', grupo: 'Ayer • 30 de mayo de 2026', fecha: '2026-05-30', hora: '8:45 p.m.', titulo: 'Pago Netflix', subtitulo: 'Suscripción mensual', categoria: 'entretenimiento', signo: 'gasto', monto: 37800, saldo: 4685600 },
-  { id: 'm5', grupo: 'Ayer • 30 de mayo de 2026', fecha: '2026-05-30', hora: '6:30 p.m.', titulo: 'Transferencia a Carlos Restrepo', subtitulo: 'BBVA •••• 4567', categoria: 'transferencia', signo: 'gasto', monto: 150000, saldo: 4723400 },
-  { id: 'm6', grupo: 'Ayer • 30 de mayo de 2026', fecha: '2026-05-30', hora: '2:10 p.m.', titulo: 'Pago servicio de luz', subtitulo: 'EPM', categoria: 'servicios', signo: 'gasto', monto: 78900, saldo: 4873400 },
-
-  { id: 'm7', grupo: '29 de mayo de 2026', fecha: '2026-05-29', hora: '7:20 p.m.', titulo: 'Compra en D1', subtitulo: 'Tarjeta de débito •••• 4589', categoria: 'compras', signo: 'gasto', monto: 45600, saldo: 4952300 },
-  { id: 'm8', grupo: '29 de mayo de 2026', fecha: '2026-05-29', hora: '5:00 p.m.', titulo: 'Reintegro cajero automático', subtitulo: 'Cajero Bancolombia', categoria: 'ingreso', signo: 'ingreso', monto: 60000, saldo: 4997900 },
-  { id: 'm9', grupo: '29 de mayo de 2026', fecha: '2026-05-29', hora: '11:30 a.m.', titulo: 'Transferencia de Laura Sánchez', subtitulo: 'Ahorros •••• 9876', categoria: 'transferencia', signo: 'ingreso', monto: 250000, saldo: 4937900 },
-
-  { id: 'm10', grupo: '28 de mayo de 2026', fecha: '2026-05-28', hora: '9:00 p.m.', titulo: 'Pago PlayStation Network', subtitulo: 'Suscripción', categoria: 'entretenimiento', signo: 'gasto', monto: 29900, saldo: 4687900 },
-  { id: 'm11', grupo: '28 de mayo de 2026', fecha: '2026-05-28', hora: '1:15 p.m.', titulo: 'Restaurante La Casona', subtitulo: 'Tarjeta de débito •••• 4589', categoria: 'alimentacion', signo: 'gasto', monto: 62000, saldo: 4717800 },
-
-  { id: 'm12', grupo: '27 de mayo de 2026', fecha: '2026-05-27', hora: '7:45 p.m.', titulo: 'Transferencia a Juan Andrés', subtitulo: 'Ahorros •••• 1234', categoria: 'transferencia', signo: 'gasto', monto: 120000, saldo: 4779800 },
-  { id: 'm13', grupo: '27 de mayo de 2026', fecha: '2026-05-27', hora: '6:20 p.m.', titulo: 'Bonificación mensual', subtitulo: 'Banchocó Bank', categoria: 'ingreso', signo: 'ingreso', monto: 100000, saldo: 4899800 },
-  { id: 'm14', grupo: '27 de mayo de 2026', fecha: '2026-05-27', hora: '10:05 a.m.', titulo: 'Pago servicio de internet', subtitulo: 'Movistar', categoria: 'servicios', signo: 'gasto', monto: 89900, saldo: 4799800 },
-
-  { id: 'm15', grupo: '26 de mayo de 2026', fecha: '2026-05-26', hora: '9:40 a.m.', titulo: 'Pago Spotify', subtitulo: 'Suscripción mensual', categoria: 'entretenimiento', signo: 'gasto', monto: 16900, saldo: 4816700 },
-];
-
-const TOTAL_MOVIMIENTOS = 160;
+const esIngresoMovimiento = (m, accountId) =>
+  m.tipo === 'DEPOSITO' || (m.tipo === 'TRANSFERENCIA' && m.cuenta_destino === accountId);
 
 export default function Historial() {
+  const [account, setAccount] = useState(null);
+  const [allMovimientos, setAllMovimientos] = useState([]);
+  const [totales, setTotales] = useState({ ingresos: 0, gastos: 0 });
+  const [loading, setLoading] = useState(true);
+
   const [pendiente, setPendiente] = useState({
     tipo: 'todos',
-    categoria: 'todas',
-    desde: '2026-05-01',
-    hasta: '2026-05-31',
+    desde: thirtyDaysAgo(),
+    hasta: todayIso(),
   });
   const [filtros, setFiltros] = useState(pendiente);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const acc = authService.getActiveAccount();
+      if (!acc?.id_cuenta) {
+        setAccount(null);
+        setAllMovimientos([]);
+        return;
+      }
+
+      const statement = await transactionService.getAccountStatement(acc.id_cuenta);
+      const cuenta = statement.cuenta || acc;
+      authService.setActiveAccount(cuenta);
+      setAccount(cuenta);
+      setAllMovimientos(statement.movimientos || []);
+
+      const ingresos =
+        Number(statement.total_depositos || 0) +
+        Number(statement.total_transferencias_recibidas || 0);
+      const gastos =
+        Number(statement.total_retiros || 0) +
+        Number(statement.total_transferencias_enviadas || 0);
+      setTotales({ ingresos, gastos });
+    } catch (err) {
+      console.error('Error cargando historial:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handlePendienteChange = (campo) => (e) => {
     setPendiente((prev) => ({ ...prev, [campo]: e.target.value }));
@@ -124,29 +108,62 @@ export default function Historial() {
   const handleFiltrar = () => setFiltros(pendiente);
 
   const movimientosFiltrados = useMemo(() => {
-    return MOVIMIENTOS_DEMO.filter((m) => {
-      if (filtros.tipo !== 'todos' && m.signo !== filtros.tipo) return false;
-      if (filtros.categoria !== 'todas' && m.categoria !== filtros.categoria) return false;
-      if (filtros.desde && m.fecha < filtros.desde) return false;
-      if (filtros.hasta && m.fecha > filtros.hasta) return false;
+    return allMovimientos.filter((m) => {
+      const signo = esIngresoMovimiento(m, account?.id_cuenta) ? 'ingreso' : 'gasto';
+      if (filtros.tipo !== 'todos' && signo !== filtros.tipo) return false;
+      const fechaIso = m.fecha ? String(m.fecha).slice(0, 10) : '';
+      if (filtros.desde && fechaIso < filtros.desde) return false;
+      if (filtros.hasta && fechaIso > filtros.hasta) return false;
       return true;
     });
-  }, [filtros]);
+  }, [filtros, allMovimientos, account]);
 
   const grupos = useMemo(() => {
     const out = [];
     movimientosFiltrados.forEach((m) => {
+      const fechaStr = m.fecha ? String(m.fecha).slice(0, 10) : '';
+      const label = fechaStr
+        ? new Date(`${fechaStr}T12:00:00`).toLocaleDateString('es-CO', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : 'Sin fecha';
       const last = out[out.length - 1];
-      if (last && last.grupo === m.grupo) {
+      if (last && last.grupo === label) {
         last.items.push(m);
       } else {
-        out.push({ grupo: m.grupo, items: [m] });
+        out.push({ grupo: label, items: [m] });
       }
     });
     return out;
   }, [movimientosFiltrados]);
 
+  const resumenFiltrado = useMemo(() => {
+    let ingresos = 0;
+    let gastos = 0;
+    movimientosFiltrados.forEach((m) => {
+      if (esIngresoMovimiento(m, account?.id_cuenta)) ingresos += Number(m.monto);
+      else gastos += Number(m.monto);
+    });
+    return { ingresos, gastos, total: movimientosFiltrados.length };
+  }, [movimientosFiltrados, account]);
+
+  const filtrosPorDefecto =
+    filtros.tipo === 'todos' &&
+    filtros.desde === thirtyDaysAgo() &&
+    filtros.hasta === todayIso();
+
+  const ingresosMostrados = filtrosPorDefecto ? totales.ingresos : resumenFiltrado.ingresos;
+  const gastosMostrados = filtrosPorDefecto ? totales.gastos : resumenFiltrado.gastos;
+
   const hayResultados = movimientosFiltrados.length > 0;
+  const cuentaLabel = account
+    ? `Cuenta ${account.tipo || 'AHORROS'} •••• ${String(account.numero_cuenta || '').slice(-4)}`
+    : 'Sin cuenta';
+  const user = authService.getCurrentUser();
+  const userName = user ? `${user.first_name}` : 'Usuario';
 
   return (
     <div className="hs-page">
@@ -162,15 +179,13 @@ export default function Historial() {
           <div className="hs-topbar__actions">
             <button type="button" className="hs-icon-btn" aria-label="Notificaciones">
               <Bell size={18} />
-              <span className="hs-icon-badge-count">5</span>
             </button>
             <button type="button" className="hs-icon-btn" aria-label="Mensajes">
               <Mail size={18} />
-              <span className="hs-icon-badge-count">3</span>
             </button>
             <button type="button" className="hs-user-chip">
               <span className="hs-user-chip__avatar" />
-              <span>Hola, Juan</span>
+              <span>Hola, {userName}</span>
               <ChevronDown size={15} />
             </button>
           </div>
@@ -189,18 +204,14 @@ export default function Historial() {
             </button>
           </div>
 
-          {/* ---------- TARJETAS RESUMEN ---------- */}
           <div className="hs-stats-grid">
             <div className="hs-stat-card">
               <span className="hs-stat-card__icon hs-stat-card__icon--green">
                 <TrendingUp size={16} />
               </span>
               <p className="hs-stat-card__label">Total ingresos</p>
-              <p className="hs-stat-card__value">{formatCOP(RESUMEN_PERIODO.ingresos.valor)}</p>
-              <p className="hs-stat-card__meta">{RESUMEN_PERIODO.ingresos.transacciones} transacciones</p>
-              <p className="hs-stat-card__trend is-up">
-                <ArrowUp size={12} /> {RESUMEN_PERIODO.ingresos.variacion}% vs. periodo anterior
-              </p>
+              <p className="hs-stat-card__value">{loading ? '—' : formatCOP(ingresosMostrados)}</p>
+              <p className="hs-stat-card__meta">{filtrosPorDefecto ? 'Estado de cuenta' : 'Periodo filtrado'}</p>
             </div>
 
             <div className="hs-stat-card">
@@ -208,20 +219,17 @@ export default function Historial() {
                 <TrendingDown size={16} />
               </span>
               <p className="hs-stat-card__label">Total gastos</p>
-              <p className="hs-stat-card__value">{formatCOP(RESUMEN_PERIODO.gastos.valor)}</p>
-              <p className="hs-stat-card__meta">{RESUMEN_PERIODO.gastos.transacciones} transacciones</p>
-              <p className="hs-stat-card__trend is-down">
-                <ArrowDown size={12} /> {RESUMEN_PERIODO.gastos.variacion}% vs. periodo anterior
-              </p>
+              <p className="hs-stat-card__value">{loading ? '—' : formatCOP(gastosMostrados)}</p>
+              <p className="hs-stat-card__meta">{filtrosPorDefecto ? 'Estado de cuenta' : 'Periodo filtrado'}</p>
             </div>
 
             <div className="hs-stat-card">
               <span className="hs-stat-card__icon hs-stat-card__icon--purple">
                 <PieChart size={16} />
               </span>
-              <p className="hs-stat-card__label">Saldo final del periodo</p>
-              <p className="hs-stat-card__value">{formatCOP(RESUMEN_PERIODO.saldoFinal.valor)}</p>
-              <p className="hs-stat-card__meta">{RESUMEN_PERIODO.saldoFinal.fecha}</p>
+              <p className="hs-stat-card__label">Saldo actual</p>
+              <p className="hs-stat-card__value">{loading || !account ? '—' : formatCOP(account.saldo)}</p>
+              <p className="hs-stat-card__meta">{account ? cuentaLabel : '—'}</p>
             </div>
 
             <div className="hs-stat-card">
@@ -229,19 +237,18 @@ export default function Historial() {
                 <Receipt size={16} />
               </span>
               <p className="hs-stat-card__label">Total transacciones</p>
-              <p className="hs-stat-card__value">{RESUMEN_PERIODO.totalTransacciones.valor}</p>
-              <p className="hs-stat-card__meta">{RESUMEN_PERIODO.totalTransacciones.rango}</p>
+              <p className="hs-stat-card__value">{loading ? '—' : resumenFiltrado.total}</p>
+              <p className="hs-stat-card__meta">Periodo filtrado</p>
             </div>
           </div>
 
-          {/* ---------- FILTROS ---------- */}
           <div className="hs-filters">
             <div className="hs-filter-field hs-filter-field--account">
               <label>Cuenta</label>
               <div className="hs-account-pill">
                 <div>
-                  <strong>{CUENTA_ORIGEN.nombre}</strong>
-                  <span>Saldo disponible: {formatCOP(CUENTA_ORIGEN.saldo)}</span>
+                  <strong>{loading ? 'Cargando…' : cuentaLabel}</strong>
+                  <span>Saldo disponible: {account ? formatCOP(account.saldo) : '—'}</span>
                 </div>
                 <ChevronDown size={15} />
               </div>
@@ -251,17 +258,6 @@ export default function Historial() {
               <label htmlFor="hs-tipo">Tipo de movimiento</label>
               <select id="hs-tipo" value={pendiente.tipo} onChange={handlePendienteChange('tipo')}>
                 {TIPO_OPTIONS.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="hs-filter-field">
-              <label htmlFor="hs-categoria">Categoría</label>
-              <select id="hs-categoria" value={pendiente.categoria} onChange={handlePendienteChange('categoria')}>
-                {CATEGORIA_OPTIONS.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.label}
                   </option>
@@ -300,24 +296,29 @@ export default function Historial() {
             </button>
           </div>
 
-          {/* ---------- TABLA DE MOVIMIENTOS ---------- */}
           <div className="hs-table-card">
-            {!hayResultados && (
-              <div className="hs-empty-state">
-                <p className="hs-empty-title">No hay movimientos con estos filtros</p>
-                <p className="hs-empty-subtitle">Ajusta el rango de fechas, tipo o categoría e intenta de nuevo.</p>
+            {loading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '24px 0', color: '#94A0B4' }}>
+                <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                <span>Cargando historial…</span>
               </div>
             )}
 
-            {hayResultados && (
+            {!loading && !hayResultados && (
+              <div className="hs-empty-state">
+                <p className="hs-empty-title">No hay movimientos con estos filtros</p>
+                <p className="hs-empty-subtitle">Ajusta el rango de fechas, tipo e intenta de nuevo.</p>
+              </div>
+            )}
+
+            {!loading && hayResultados && (
               <>
                 <div className="hs-table-head">
                   <span>Fecha</span>
                   <span>Descripción</span>
-                  <span>Categoría</span>
                   <span>Tipo</span>
+                  <span>Categoría</span>
                   <span className="hs-align-right">Monto</span>
-                  <span className="hs-align-right">Saldo</span>
                   <span />
                 </div>
 
@@ -325,25 +326,23 @@ export default function Historial() {
                   <div key={g.grupo} className="hs-group">
                     <p className="hs-group__label">{g.grupo}</p>
                     {g.items.map((m) => {
-                      const cat = CATEGORIA_STYLE[m.categoria];
-                      const CatIcon = cat.icon;
-                      const esIngreso = m.signo === 'ingreso';
+                      const esIngreso = esIngresoMovimiento(m, account?.id_cuenta);
+                      const tipoEstilo = TIPO_ESTILO[m.tipo] || { label: m.tipo, tone: 'blue' };
+                      const hora = m.fecha
+                        ? new Date(m.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+                        : '—';
                       return (
-                        <div key={m.id} className="hs-row">
-                          <span className="hs-row__fecha">{m.hora}</span>
+                        <div key={m.id_transaccion} className="hs-row">
+                          <span className="hs-row__fecha">{hora}</span>
 
                           <span className="hs-row__desc">
-                            <span className={`hs-row-icon hs-row-icon--${cat.tone}`}>
-                              <CatIcon size={15} />
+                            <span className={`hs-row-icon hs-row-icon--${tipoEstilo.tone}`}>
+                              <ArrowLeftRight size={15} />
                             </span>
                             <span className="hs-row-desc__text">
-                              <strong>{m.titulo}</strong>
-                              <span>{m.subtitulo}</span>
+                              <strong>{m.descripcion || m.tipo}</strong>
+                              <span>Banchocó Bank</span>
                             </span>
-                          </span>
-
-                          <span className="hs-row__cat">
-                            <span className={`hs-pill hs-pill--${cat.tone}`}>{cat.label}</span>
                           </span>
 
                           <span className={`hs-row__tipo ${esIngreso ? 'is-ingreso' : 'is-gasto'}`}>
@@ -351,12 +350,14 @@ export default function Historial() {
                             {esIngreso ? 'Ingreso' : 'Gasto'}
                           </span>
 
+                          <span className="hs-row__cat">
+                            <span className={`hs-pill hs-pill--${tipoEstilo.tone}`}>{tipoEstilo.label}</span>
+                          </span>
+
                           <span className={`hs-row__monto hs-align-right ${esIngreso ? 'is-positivo' : 'is-negativo'}`}>
                             {esIngreso ? '+ ' : '- '}
                             {formatCOP(m.monto)}
                           </span>
-
-                          <span className="hs-row__saldo hs-align-right">{formatCOP(m.saldo)}</span>
 
                           <button type="button" className="hs-row__menu" aria-label="Más opciones">
                             <MoreVertical size={16} />
@@ -369,33 +370,14 @@ export default function Historial() {
 
                 <div className="hs-pagination">
                   <p>
-                    Mostrando 1 a {movimientosFiltrados.length} de {TOTAL_MOVIMIENTOS} movimientos
+                    Mostrando {movimientosFiltrados.length} movimiento
+                    {movimientosFiltrados.length !== 1 ? 's' : ''}
                   </p>
-                  <div className="hs-pagination__pages">
-                    <button type="button" className="hs-page-btn" aria-label="Anterior">
-                      <ChevronLeft size={15} />
-                    </button>
-                    {[1, 2, 3].map((n) => (
-                      <button
-                        type="button"
-                        key={n}
-                        className={`hs-page-btn ${n === 1 ? 'is-active' : ''}`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                    <span className="hs-page-ellipsis">…</span>
-                    <button type="button" className="hs-page-btn">11</button>
-                    <button type="button" className="hs-page-btn" aria-label="Siguiente">
-                      <ChevronRight size={15} />
-                    </button>
-                  </div>
                 </div>
               </>
             )}
           </div>
 
-          {/* ---------- CONSEJO ---------- */}
           <button type="button" className="hs-tip-banner">
             <span className="hs-tip-banner__icon">
               <ShieldCheck size={18} />

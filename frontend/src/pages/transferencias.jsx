@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import {
@@ -16,10 +16,12 @@ import {
   Clock,
   CheckCircle2,
   Headphones,
-  Calendar,
   Lock,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar.jsx';
+import authService from '../services/authService.js';
+import accountService from '../services/accountService.js';
+import transactionService from '../services/transactionService.js';
 import '../assets/styles/transferencias.css';
 
 /*
@@ -90,11 +92,6 @@ const BANCOS_COLOMBIA = [
   { id: 'lulo', nombre: 'Lulo Bank', tipo: 'billetera', minDigitos: 10 },
 ];
 
-const CUENTA_ORIGEN = {
-  nombre: 'Cuenta Corriente •••• 4589',
-  saldo: 7250000,
-};
-
 // Bancos disponibles para crear contactos (incluye la propia Banchocó).
 const BANCOS_CONTACTO = [
   { id: 'banchoco', nombre: 'Banchocó Bank', tipo: 'banchoco', minDigitos: 10 },
@@ -133,14 +130,6 @@ const CONTACTOS_FRECUENTES = [
   { nombre: 'Laura Sánchez', bancoId: 'davivienda', banco: 'Davivienda', tipoCuenta: 'corriente', numeroCuenta: '9876543210', tone: 'purple', favorito: false },
   { nombre: 'Carlos Restrepo', bancoId: 'bbva', banco: 'BBVA', tipoCuenta: 'ahorro', numeroCuenta: '1122334455', tone: 'blue', favorito: false },
   { nombre: 'Camila Torres', bancoId: 'nequi', banco: 'Nequi', tipoCuenta: 'billetera', numeroCuenta: '3114567890', alias: 'camilat', tone: 'pink', favorito: false },
-];
-
-const ACTIVIDAD_RECIENTE = [
-  { icon: ArrowLeftRight, tone: 'blue', titulo: 'Transferencia a María Paula', fecha: 'Hoy, 10:30 a.m.', monto: -200000 },
-  { icon: ArrowLeftRight, tone: 'green', titulo: 'Transferencia recibida de Juan Andrés', fecha: 'Ayer, 8:15 p.m.', monto: 350000 },
-  { icon: ArrowLeftRight, tone: 'blue', titulo: 'Transferencia a Carlos Restrepo', fecha: 'Ayer, 5:20 p.m.', monto: -150000 },
-  { icon: ArrowLeftRight, tone: 'green', titulo: 'Transferencia recibida de Laura Sánchez', fecha: '24 May, 11:05 a.m.', monto: 250000 },
-  { icon: Calendar, tone: 'purple', titulo: 'Pago programado - Arriendo', fecha: '24 May, 12:00 a.m.', monto: -850000 },
 ];
 
 const LIMITES = [
@@ -206,9 +195,39 @@ const ValorField = ({ value, error, disabled, onMontoChange, onQuickAmount, wide
 export default function Transferencias() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
   const [step, setStep] = useState('form'); // 'form' | 'confirm' | 'success'
   const [submitting, setSubmitting] = useState(false);
   const [tipoTransferencia, setTipoTransferencia] = useState('banchoco');
+  const [account, setAccount] = useState(null);
+  const [movimientos, setMovimientos] = useState([]);
+
+  const loadAccountData = useCallback(async () => {
+    let acc = authService.getActiveAccount();
+    if (acc?.id_cuenta) {
+      try {
+        const fresh = await accountService.getAccountById(acc.id_cuenta);
+        acc = fresh;
+        authService.setActiveAccount(fresh);
+        const txs = await transactionService.getAccountTransactions(fresh.id_cuenta);
+        setMovimientos(txs || []);
+      } catch (_) {}
+    }
+    setAccount(acc);
+  }, []);
+
+  useEffect(() => {
+    loadAccountData();
+  }, [loadAccountData]);
+
+  const numeroCuenta = account?.numero_cuenta || '';
+  const lastFour = numeroCuenta ? numeroCuenta.slice(-4) : '••••';
+  const cuentaOrigenLabel = account
+    ? `Cuenta ${account.tipo || 'AHORROS'} •••• ${lastFour}`
+    : 'Sin cuenta';
+  const saldoDisponible = account ? Number(account.saldo) : 0;
+  const user = authService.getCurrentUser();
+  const userName = user?.first_name || 'Usuario';
 
   const [contactos, setContactos] = useState(CONTACTOS_FRECUENTES);
   const [showCreateContact, setShowCreateContact] = useState(false);
@@ -368,8 +387,11 @@ export default function Transferencias() {
     }
 
     if (tipoTransferencia === 'banchoco') {
-      if (!form.cuentaDestino.trim()) {
-        next.cuentaDestino = 'Selecciona un contacto o escribe la cuenta destino.';
+      const destino =
+        form.cuentaDestino.trim() ||
+        (/^\d{10}$/.test(form.nombreDestinatario.trim()) ? form.nombreDestinatario.trim() : '');
+      if (!destino) {
+        next.cuentaDestino = 'Selecciona un contacto o escribe el número de cuenta destino (10 dígitos).';
       }
     } else {
       if (!form.banco) {
@@ -393,7 +415,7 @@ export default function Transferencias() {
     const montoNum = Number(form.monto);
     if (!form.monto || montoNum <= 0) {
       next.monto = 'Ingresa un monto mayor a 0.';
-    } else if (montoNum > CUENTA_ORIGEN.saldo) {
+    } else if (montoNum > saldoDisponible) {
       next.monto = 'El monto supera tu saldo disponible.';
     }
 
@@ -408,10 +430,31 @@ export default function Transferencias() {
 
   const handleConfirmar = async () => {
     setSubmitting(true);
-    // Aquí se conecta con el servicio real de transferencias (API / backend)
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    setSubmitting(false);
-    setStep('success');
+    setServerError('');
+    const destino =
+      tipoTransferencia === 'banchoco'
+        ? form.cuentaDestino.trim() || form.nombreDestinatario.trim()
+        : form.numeroCuenta;
+    try {
+      await transactionService.transfer({
+        cuenta_origen: numeroCuenta,
+        cuenta_destino: destino,
+        monto: Number(form.monto),
+        descripcion: form.descripcion || `Transferencia a ${form.nombreDestinatario}`,
+      });
+      await loadAccountData();
+      setStep('success');
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setServerError(
+        typeof detail === 'string'
+          ? detail
+          : 'No se pudo completar la transferencia. Verifica saldo y que la cuenta destino exista en Banchocó.',
+      );
+      setStep('form');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleNuevaTransferencia = () => {
@@ -447,7 +490,7 @@ export default function Transferencias() {
             </button>
             <button type="button" className="tx-user-chip">
               <span className="tx-user-chip__avatar" />
-              <span>Hola, Juan</span>
+              <span>Hola, {userName}</span>
               <ChevronDown size={15} />
             </button>
           </div>
@@ -509,12 +552,14 @@ export default function Transferencias() {
                       <CreditCard size={16} />
                     </div>
                     <div className="tx-origin-card__info">
-                      <strong>{CUENTA_ORIGEN.nombre}</strong>
+                      <strong>{cuentaOrigenLabel}</strong>
                       <span>Saldo disponible</span>
                     </div>
-                    <div className="tx-origin-card__amount">{formatCOP(CUENTA_ORIGEN.saldo)}</div>
+                    <div className="tx-origin-card__amount">{formatCOP(saldoDisponible)}</div>
                     <ChevronDown size={16} className="tx-origin-card__chevron" />
                   </div>
+
+                  {serverError && <p className="error-text">{serverError}</p>}
 
                   <form onSubmit={handleContinuar} noValidate>
                     <div className={`tx-form-fields ${tipoTransferencia === 'ach' ? 'tx-form-fields--ach' : ''}`}>
@@ -729,7 +774,7 @@ export default function Transferencias() {
 
                   <div className="receipt-row">
                     <span>Cuenta origen</span>
-                    <strong>{CUENTA_ORIGEN.nombre}</strong>
+                    <strong>{cuentaOrigenLabel}</strong>
                   </div>
                   <div className="receipt-row">
                     <span>Destinatario</span>
@@ -928,21 +973,39 @@ export default function Transferencias() {
                 <Link to="/historial" className="tx-link-btn">Ver todo</Link>
               </div>
               <div className="tx-activity-list">
-                {ACTIVIDAD_RECIENTE.map((a) => (
-                  <div className="tx-activity-row" key={a.titulo}>
-                    <span className={`tx-icon-badge tx-icon-badge--${a.tone}`}>
-                      <a.icon size={15} />
-                    </span>
-                    <span className="tx-activity-row__info">
-                      <strong>{a.titulo}</strong>
-                      <span>{a.fecha}</span>
-                    </span>
-                    <strong className={`tx-activity-row__amount ${a.monto > 0 ? 'is-positive' : ''}`}>
-                      {a.monto > 0 ? '+ ' : '- '}
-                      {formatCOP(Math.abs(a.monto))}
-                    </strong>
-                  </div>
-                ))}
+                {movimientos.length === 0 ? (
+                  <p className="tx-hint">Aún no hay movimientos en esta cuenta.</p>
+                ) : (
+                  movimientos.slice(0, 5).map((m) => {
+                    const esIngreso =
+                      m.tipo === 'DEPOSITO' ||
+                      (m.tipo === 'TRANSFERENCIA' && m.cuenta_destino === account?.id_cuenta);
+                    const titulo = m.descripcion || m.tipo;
+                    const fecha = m.fecha
+                      ? new Date(m.fecha).toLocaleString('es-CO', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '';
+                    return (
+                      <div className="tx-activity-row" key={m.id_transaccion}>
+                        <span className={`tx-icon-badge tx-icon-badge--${esIngreso ? 'green' : 'blue'}`}>
+                          <ArrowLeftRight size={15} />
+                        </span>
+                        <span className="tx-activity-row__info">
+                          <strong>{titulo}</strong>
+                          <span>{fecha}</span>
+                        </span>
+                        <strong className={`tx-activity-row__amount ${esIngreso ? 'is-positive' : ''}`}>
+                          {esIngreso ? '+ ' : '- '}
+                          {formatCOP(Math.abs(Number(m.monto)))}
+                        </strong>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </section>
 

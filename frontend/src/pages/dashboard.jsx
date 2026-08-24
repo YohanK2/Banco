@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,131 +11,147 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  ShoppingBag,
-  Utensils,
-  Zap,
-  Smartphone,
-  Check,
   ChevronRight,
+  Check,
+  Loader2,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar.jsx";
+import authService from "../services/authService.js";
+import accountService from "../services/accountService.js";
+import transactionService from "../services/transactionService.js";
 import "../assets/styles/dashboard.css";
 
-/*
-  MAREA — dashboard bancario
-  --------------------------------------------------
-  Los estilos viven en BankDashboard.css (variables de color,
-  tipografía, layout). Este archivo solo maneja estructura,
-  estado y las animaciones de framer-motion.
-
-  Nota de integración:
-    En tu proyecto real, reemplaza <ConfirmModal> por Swal.fire(...)
-    de 'sweetalert2' (ya la tienes instalada). El array ACCIONES ya
-    trae los textos (title / text) listos para pasar directo al
-    objeto de opciones de Swal.
-*/
-
 const fmt = (n) =>
-  n.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const MOVIMIENTOS = [
-  { id: 1, nombre: "Transferencia recibida · Laura M.", fecha: "Hoy, 9:41 a.m.", monto: 850000, cat: "transfer" },
-  { id: 2, nombre: "Supermercado La Colonia", fecha: "Ayer, 6:12 p.m.", monto: -128500, cat: "shopping" },
-  { id: 3, nombre: "Restaurante El Fogón", fecha: "Ayer, 1:30 p.m.", monto: -64000, cat: "food" },
-  { id: 4, nombre: "Recarga Claro Prepago", fecha: "Lun, 8:05 a.m.", monto: -20000, cat: "phone" },
-  { id: 5, nombre: "Pago factura de energía", fecha: "Sáb, 11:00 a.m.", monto: -95300, cat: "utility" },
-];
-
-const ICONOS_CAT = {
-  transfer: ArrowRightLeft,
-  shopping: ShoppingBag,
-  food: Utensils,
-  phone: Smartphone,
-  utility: Zap,
+const TIPO_ICON = {
+  DEPOSITO: ArrowUpRight,
+  RETIRO: ArrowDownRight,
+  TRANSFERENCIA: ArrowRightLeft,
 };
 
 const ACCIONES = [
-  {
-    id: "transferir",
-    label: "Transferir",
-    icon: ArrowRightLeft,
-    title: "Transferir dinero",
-    text: "Vas a iniciar una transferencia desde tu cuenta de ahorros. ¿Deseas continuar?",
-  },
-  {
-    id: "recargar",
-    label: "Recargar",
-    icon: Plus,
-    title: "Recargar celular",
-    text: "Elige el número y el operador para tu recarga en el siguiente paso.",
-  },
-  {
-    id: "pagar",
-    label: "Pagar servicios",
-    icon: Receipt,
-    title: "Pagar servicios",
-    text: "Podrás buscar tu factura por empresa o número de referencia.",
-  },
-  {
-    id: "mas",
-    label: "Más",
-    icon: LayoutGrid,
-    title: "Todas las operaciones",
-    text: "Aquí encontrarás el resto de funciones: seguros, inversiones y más.",
-  },
+  { id: "transferir", label: "Transferir", icon: ArrowRightLeft, route: "/transferencias" },
+  { id: "depositar", label: "Depositar", icon: Plus, route: null },
+  { id: "historial", label: "Historial", icon: Receipt, route: "/historial" },
+  { id: "movimientos", label: "Más", icon: LayoutGrid, route: "/movimientos" },
 ];
 
-function ConfirmModal({ open, data, onClose }) {
-  if (!data) return null;
+// Modal simple de depósito inline
+function DepositModal({ open, numeroCuenta, onClose, onSuccess }) {
+  const [monto, setMonto] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleDeposit = async () => {
+    const n = Number(monto.replace(/\D/g, ""));
+    if (!n || n <= 0) { setError("Ingresa un monto válido mayor a 0."); return; }
+    setLoading(true);
+    setError("");
+    try {
+      await transactionService.deposit({ numero_cuenta: numeroCuenta, monto: n, descripcion: "Depósito desde dashboard" });
+      setMonto("");
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.detail || "Error al realizar el depósito.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) return null;
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="modal-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="modal"
-            initial={{ opacity: 0, y: 24, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal__icon">
-              <Check size={26} color="#12B76A" strokeWidth={2.5} />
-            </div>
-            <h3 className="modal__title">{data.title}</h3>
-            <p className="modal__text">{data.text}</p>
-            <div className="modal__actions">
-              <button onClick={onClose} className="modal__btn modal__btn--ghost">
-                Cancelar
-              </button>
-              <button onClick={onClose} className="modal__btn modal__btn--solid">
-                Continuar
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="modal-overlay" onClick={onClose}>
+      <motion.div
+        className="modal"
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 340, damping: 28 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal__icon"><Check size={26} color="#12B76A" strokeWidth={2.5} /></div>
+        <h3 className="modal__title">Depositar dinero</h3>
+        <p className="modal__text">Ingresa el monto que deseas depositar en tu cuenta.</p>
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="$ 0"
+          value={monto ? `$ ${Number(monto.replace(/\D/g, "")).toLocaleString("es-CO")}` : ""}
+          onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))}
+          style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #dde1eb", fontSize: "1.1rem", marginBottom: "8px", boxSizing: "border-box" }}
+        />
+        {error && <p style={{ color: "#b00020", fontSize: "0.82rem", marginBottom: "8px" }}>{error}</p>}
+        <div className="modal__actions">
+          <button onClick={onClose} className="modal__btn modal__btn--ghost" disabled={loading}>Cancelar</button>
+          <button onClick={handleDeposit} className="modal__btn modal__btn--solid" disabled={loading}>
+            {loading ? "Procesando…" : "Confirmar depósito"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
 export default function BankDashboard() {
   const navigate = useNavigate();
   const [showBalance, setShowBalance] = useState(true);
-  const [modalData, setModalData] = useState(null);
+  const [showDepositModal, setShowDepositModal] = useState(false);
 
-  const saldo = 4238500;
-  const variacion = 2.4;
+  const [account, setAccount] = useState(null);
+  const [movimientos, setMovimientos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const user = authService.getCurrentUser();
+  const firstName = user?.first_name || "Usuario";
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Obtener cuenta activa del localStorage o del backend
+      let activeAccount = authService.getActiveAccount();
+      if (activeAccount?.id_cuenta) {
+        const fresh = await accountService.getAccountById(activeAccount.id_cuenta);
+        activeAccount = fresh;
+        authService.setActiveAccount(fresh);
+      }
+      setAccount(activeAccount);
+
+      if (activeAccount?.id_cuenta) {
+        const txs = await transactionService.getAccountTransactions(activeAccount.id_cuenta);
+        setMovimientos(txs.slice(0, 5)); // Solo los 5 más recientes
+      }
+    } catch (err) {
+      console.error("Error cargando datos del dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const saldo = account ? Number(account.saldo) : 0;
+  const numeroCuenta = account?.numero_cuenta || "";
+  const lastFour = numeroCuenta ? numeroCuenta.slice(-4) : "••••";
+
+  const handleAccionClick = (accion) => {
+    if (accion.route) {
+      navigate(accion.route);
+    } else if (accion.id === "depositar") {
+      setShowDepositModal(true);
+    }
+  };
+
+  const formatMovimiento = (m) => {
+    const esIngreso = m.tipo === "DEPOSITO" || (m.tipo === "TRANSFERENCIA" && m.cuenta_destino === account?.id_cuenta);
+    return { ...m, esIngreso };
+  };
 
   return (
     <div className="dashboard">
-      {/* SIDEBAR */}
       <Sidebar />
 
       <main className="main">
@@ -147,21 +163,17 @@ export default function BankDashboard() {
           className="greeting"
         >
           <p className="greeting__eyebrow">Bienvenido de nuevo</p>
-          <h1 className="greeting__title">Tu resumen de cuenta</h1>
+          <h1 className="greeting__title">Hola, {firstName} 👋</h1>
         </motion.div>
 
-        {/* TARJETA DE SALDO — elemento firma */}
+        {/* TARJETA DE SALDO */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="hero-card"
         >
-          <svg
-            className="hero-card__wave"
-            viewBox="0 0 700 160"
-            preserveAspectRatio="none"
-          >
+          <svg className="hero-card__wave" viewBox="0 0 700 160" preserveAspectRatio="none">
             <motion.path
               d="M0,80 C120,20 220,140 350,80 C480,20 580,140 700,80 L700,160 L0,160 Z"
               fill="#F2A93B"
@@ -182,7 +194,7 @@ export default function BankDashboard() {
                     <div className="card-chip__cell" />
                   </div>
                 </div>
-                <span className="card-number tabular">•••• •••• •••• 4821</span>
+                <span className="card-number tabular">•••• •••• •••• {lastFour}</span>
               </div>
 
               <p className="balance-label">Saldo disponible</p>
@@ -197,7 +209,7 @@ export default function BankDashboard() {
                     transition={{ duration: 0.18 }}
                     className="balance-amount tabular"
                   >
-                    {showBalance ? `$ ${fmt(saldo)}` : "$ •••••••"}
+                    {loading ? "Cargando…" : showBalance ? `$ ${fmt(saldo)}` : "$ •••••••"}
                   </motion.span>
                 </AnimatePresence>
                 <button
@@ -209,16 +221,18 @@ export default function BankDashboard() {
                 </button>
               </div>
 
-              <div className="balance-trend">
-                <TrendingUp size={12} />
-                +{variacion}% este mes
-              </div>
+              {!loading && (
+                <div className="balance-trend">
+                  <TrendingUp size={12} />
+                  Cuenta {account?.tipo || "AHORROS"}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="hero-card__footer">
             <span>Cuenta de ahorros</span>
-            <strong>MAREA</strong>
+            <strong>BANCHOCÓ</strong>
           </div>
         </motion.div>
 
@@ -234,7 +248,7 @@ export default function BankDashboard() {
             return (
               <button
                 key={a.id}
-                onClick={() => (a.id === "transferir" ? navigate("/transferencias") : setModalData(a))}
+                onClick={() => handleAccionClick(a)}
                 className="quick-action"
               >
                 <div className="quick-action__icon">
@@ -260,50 +274,73 @@ export default function BankDashboard() {
             </button>
           </div>
 
-          <div>
-            {MOVIMIENTOS.map((m, i) => {
-              const Icon = ICONOS_CAT[m.cat];
-              const positivo = m.monto > 0;
-              return (
-                <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.35, delay: 0.3 + i * 0.05 }}
-                  className="movement"
-                >
-                  <div className="movement__left">
-                    <div className={`movement__icon ${positivo ? "movement__icon--in" : "movement__icon--out"}`}>
-                      <Icon size={16} color={positivo ? "#12B76A" : "#0B3D2E"} />
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "24px 0", color: "#94A0B4" }}>
+              <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+              <span>Cargando movimientos…</span>
+            </div>
+          ) : movimientos.length === 0 ? (
+            <p style={{ color: "#94A0B4", fontSize: "0.9rem", padding: "16px 0" }}>
+              Aún no hay movimientos. ¡Realiza tu primer depósito!
+            </p>
+          ) : (
+            <div>
+              {movimientos.map((m, i) => {
+                const fm = formatMovimiento(m);
+                const Icon = TIPO_ICON[m.tipo] || ArrowRightLeft;
+                const positivo = fm.esIngreso;
+                return (
+                  <motion.div
+                    key={m.id_transaccion}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.35, delay: 0.3 + i * 0.05 }}
+                    className="movement"
+                  >
+                    <div className="movement__left">
+                      <div className={`movement__icon ${positivo ? "movement__icon--in" : "movement__icon--out"}`}>
+                        <Icon size={16} color={positivo ? "#12B76A" : "#0B3D2E"} />
+                      </div>
+                      <div>
+                        <p className="movement__name">
+                          {m.descripcion || m.tipo}
+                        </p>
+                        <p className="movement__date">
+                          {new Date(m.fecha).toLocaleString("es-CO", {
+                            day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="movement__name">{m.nombre}</p>
-                      <p className="movement__date">{m.fecha}</p>
-                    </div>
-                  </div>
 
-                  <div className="movement__amount">
-                    {positivo ? (
-                      <ArrowUpRight size={14} color="#12B76A" />
-                    ) : (
-                      <ArrowDownRight size={14} color="#F0655A" />
-                    )}
-                    <span
-                      className={`movement__amount-value tabular ${
-                        positivo ? "movement__amount-value--in" : "movement__amount-value--out"
-                      }`}
-                    >
-                      {positivo ? "+" : "-"} ${fmt(Math.abs(m.monto))}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                    <div className="movement__amount">
+                      {positivo ? (
+                        <ArrowUpRight size={14} color="#12B76A" />
+                      ) : (
+                        <ArrowDownRight size={14} color="#F0655A" />
+                      )}
+                      <span
+                        className={`movement__amount-value tabular ${
+                          positivo ? "movement__amount-value--in" : "movement__amount-value--out"
+                        }`}
+                      >
+                        {positivo ? "+" : "-"} ${fmt(Math.abs(Number(m.monto)))}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
       </main>
 
-      <ConfirmModal open={!!modalData} data={modalData} onClose={() => setModalData(null)} />
+      <DepositModal
+        open={showDepositModal}
+        numeroCuenta={numeroCuenta}
+        onClose={() => setShowDepositModal(false)}
+        onSuccess={loadData}
+      />
     </div>
   );
 }

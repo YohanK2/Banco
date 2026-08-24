@@ -1,25 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, ShieldCheck, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ShieldCheck, ArrowRight, AlertCircle } from "lucide-react";
+import authService from "../services/authService.js";
 import "../assets/styles/login.css";
-
-
-/*
-  BANCHOCÓ BANK — inicio de sesión
-  --------------------------------------------------
-  Panel izquierdo: video a sangre (edge-to-edge) con overlay verde
-  oscuro semitransparente, degradado más fuerte hacia abajo para que
-  el mensaje siga siendo legible sobre cualquier escena. Usa metraje
-  del Chocó (selva, ríos, paisaje) para darle identidad propia al
-  banco en vez de un stock genérico de finanzas.
-
-  Reemplaza VIDEO_SRC por tus assets reales. Mientras no haya
-  video, el overlay ya deja el panel legible.
-
-  Panel derecho: formulario de login sin cambios de fondo, limpio y
-  blanco, dedicado solo a la autenticación.
-*/
 
 const VIDEO_SRC = "/choco/inicio.mp4";
 
@@ -49,22 +33,33 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setServerError("");
     const nextErrors = validate({ email, password });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
     try {
-      await onLogin(email.trim(), password);
+      await authService.login(email.trim(), password);
+      onLogin(email.trim(), password);
       navigate("/dashboard");
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.detail) {
+        const detail = err.response.data.detail;
+        setServerError(typeof detail === "string" ? detail : "Credenciales inválidas.");
+      } else {
+        setServerError("No se pudo conectar con el servidor bancario.");
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="bl">
@@ -130,6 +125,21 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
           <span className="bl-form__eyebrow">Bienvenido de nuevo</span>
           <h1 className="bl-form__title">Iniciar sesión</h1>
           <p className="bl-form__subtitle">Ingresa tus datos para ver tu cuenta.</p>
+
+          {serverError && (
+            <div
+              role="alert"
+              style={{
+                display: "flex", alignItems: "flex-start", gap: "8px",
+                background: "#fff0f0", border: "1px solid #f5c2c7",
+                borderRadius: "8px", padding: "10px 14px",
+                color: "#b00020", fontSize: "0.85rem", marginBottom: "4px",
+              }}
+            >
+              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: "2px" }} />
+              <span>{serverError}</span>
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="email" className="field__label">Correo</label>

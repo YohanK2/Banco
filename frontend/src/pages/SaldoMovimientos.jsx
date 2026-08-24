@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye,
@@ -7,39 +7,49 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ArrowRightLeft,
-  ShoppingBag,
-  Utensils,
-  Smartphone,
-  Zap,
+  Loader2,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar.jsx";
+import authService from "../services/authService.js";
+import transactionService from "../services/transactionService.js";
 import "../assets/styles/SaldoMovimientos.css";
 
 const fmt = (n) =>
-  n.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const MOVIMIENTOS = [
-  { id: 1, nombre: "Transferencia recibida · Laura M.", fecha: "Hoy, 9:41 a.m.", monto: 850000, cat: "transfer" },
-  { id: 2, nombre: "Supermercado La Colonia", fecha: "Ayer, 6:12 p.m.", monto: -128500, cat: "shopping" },
-  { id: 3, nombre: "Restaurante El Fogón", fecha: "Ayer, 1:30 p.m.", monto: -64000, cat: "food" },
-  { id: 4, nombre: "Recarga Claro Prepago", fecha: "Lun, 8:05 a.m.", monto: -20000, cat: "phone" },
-  { id: 5, nombre: "Pago factura de energía", fecha: "Sáb, 11:00 a.m.", monto: -95300, cat: "utility" },
-  { id: 6, nombre: "Transferencia enviada · Carlos R.", fecha: "Vie, 5:30 p.m.", monto: -250000, cat: "transfer" },
-];
-
-const ICONOS_CAT = {
-  transfer: ArrowRightLeft,
-  shopping: ShoppingBag,
-  food: Utensils,
-  phone: Smartphone,
-  utility: Zap,
+const TIPO_ICON = {
+  DEPOSITO: ArrowUpRight,
+  RETIRO: ArrowDownRight,
+  TRANSFERENCIA: ArrowRightLeft,
 };
 
 export default function SaldoMovimientos() {
   const [showBalance, setShowBalance] = useState(true);
+  const [account, setAccount] = useState(null);
+  const [movimientos, setMovimientos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const saldo = 4238500;
-  const variacion = 2.4;
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const acc = authService.getActiveAccount();
+      if (acc?.id_cuenta) {
+        const statement = await transactionService.getAccountStatement(acc.id_cuenta);
+        const cuenta = statement.cuenta || acc;
+        authService.setActiveAccount(cuenta);
+        setAccount(cuenta);
+        setMovimientos(statement.movimientos || []);
+      }
+    } catch (err) {
+      console.error("Error cargando saldo y movimientos:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const saldo = account ? Number(account.saldo) : 0;
 
   return (
     <div className="saldo-page">
@@ -88,7 +98,7 @@ export default function SaldoMovimientos() {
                     transition={{ duration: 0.18 }}
                     className="balance-amount tabular"
                   >
-                    {showBalance ? `$ ${fmt(saldo)}` : "$ •••••••"}
+                    {loading ? "Cargando…" : showBalance ? `$ ${fmt(saldo)}` : "$ •••••••"}
                   </motion.span>
                 </AnimatePresence>
                 <button
@@ -100,10 +110,12 @@ export default function SaldoMovimientos() {
                 </button>
               </div>
 
-              <div className="balance-trend">
-                <TrendingUp size={12} />
-                +{variacion}% este mes
-              </div>
+              {!loading && account && (
+                <div className="balance-trend">
+                  <TrendingUp size={12} />
+                  Cuenta {account.tipo || "AHORROS"} · •••• {account.numero_cuenta?.slice(-4)}
+                </div>
+              )}
             </div>
           </div>
 
@@ -124,46 +136,61 @@ export default function SaldoMovimientos() {
             <h2 className="movements__title">Todos los movimientos</h2>
           </div>
 
-          <div>
-            {MOVIMIENTOS.map((m, i) => {
-              const Icon = ICONOS_CAT[m.cat];
-              const positivo = m.monto > 0;
-              return (
-                <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.35, delay: 0.18 + i * 0.05 }}
-                  className="movement"
-                >
-                  <div className="movement__left">
-                    <div className={`movement__icon ${positivo ? "movement__icon--in" : "movement__icon--out"}`}>
-                      <Icon size={16} color={positivo ? "#12B76A" : "#0B3D2E"} />
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "24px 0", color: "#94A0B4" }}>
+              <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+              <span>Cargando movimientos…</span>
+            </div>
+          ) : movimientos.length === 0 ? (
+            <p style={{ color: "#94A0B4", fontSize: "0.9rem", padding: "16px 0" }}>
+              Aún no hay movimientos en esta cuenta.
+            </p>
+          ) : (
+            <div>
+              {movimientos.map((m, i) => {
+                const esIngreso = m.tipo === "DEPOSITO" || (m.tipo === "TRANSFERENCIA" && m.cuenta_destino === account?.id_cuenta);
+                const Icon = TIPO_ICON[m.tipo] || ArrowRightLeft;
+                return (
+                  <motion.div
+                    key={m.id_transaccion}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.35, delay: 0.18 + i * 0.05 }}
+                    className="movement"
+                  >
+                    <div className="movement__left">
+                      <div className={`movement__icon ${esIngreso ? "movement__icon--in" : "movement__icon--out"}`}>
+                        <Icon size={16} color={esIngreso ? "#12B76A" : "#0B3D2E"} />
+                      </div>
+                      <div>
+                        <p className="movement__name">{m.descripcion || m.tipo}</p>
+                        <p className="movement__date">
+                          {new Date(m.fecha).toLocaleString("es-CO", {
+                            day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="movement__name">{m.nombre}</p>
-                      <p className="movement__date">{m.fecha}</p>
-                    </div>
-                  </div>
 
-                  <div className="movement__amount">
-                    {positivo ? (
-                      <ArrowUpRight size={14} color="#12B76A" />
-                    ) : (
-                      <ArrowDownRight size={14} color="#F0655A" />
-                    )}
-                    <span
-                      className={`movement__amount-value tabular ${
-                        positivo ? "movement__amount-value--in" : "movement__amount-value--out"
-                      }`}
-                    >
-                      {positivo ? "+" : "-"} ${fmt(Math.abs(m.monto))}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                    <div className="movement__amount">
+                      {esIngreso ? (
+                        <ArrowUpRight size={14} color="#12B76A" />
+                      ) : (
+                        <ArrowDownRight size={14} color="#F0655A" />
+                      )}
+                      <span
+                        className={`movement__amount-value tabular ${
+                          esIngreso ? "movement__amount-value--in" : "movement__amount-value--out"
+                        }`}
+                      >
+                        {esIngreso ? "+" : "-"} ${fmt(Math.abs(Number(m.monto)))}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
       </main>
     </div>

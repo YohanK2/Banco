@@ -19,10 +19,10 @@ import {
 } from "lucide-react";
 import "../assets/styles/registro.css";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import authService from "../services/authService.js";
 
 export function validate({
+
   nombres,
   apellidos,
   documento,
@@ -123,52 +123,42 @@ export default function Registro() {
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombres: form.nombres.trim(),
-          apellidos: form.apellidos.trim(),
-          documento: form.documento.trim(),
-          telefono: form.telefono.trim(),
-          direccion: form.direccion.trim(),
-          correo: form.correo.trim(),
-          contrasena: form.contrasena,
-          confirmar_contrasena: form.confirmar_contrasena,
-          tipo_cuenta: "AHORROS",
-        }),
+      const data = await authService.register({
+        nombres: form.nombres.trim(),
+        apellidos: form.apellidos.trim(),
+        documento: form.documento.trim(),
+        telefono: form.telefono.trim(),
+        direccion: form.direccion.trim(),
+        correo: form.correo.trim(),
+        contrasena: form.contrasena,
+        confirmar_contrasena: form.confirmar_contrasena,
+        tipo_cuenta: "AHORROS",
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccessMsg(
-          `¡Bienvenido ${data?.cliente?.nombres || form.nombres}! Tu cuenta bancaria N° ${data?.cuenta?.numero_cuenta || ""} ha sido creada con éxito. Redirigiendo...`
-        );
-        setTimeout(() => {
-          navigate("/login");
-        }, 2200);
-      } else {
-        if (data && data.detail) {
-          if (typeof data.detail === "string") {
-            setServerError(data.detail);
-          } else if (Array.isArray(data.detail)) {
-            setServerError(data.detail[0]?.msg || "Datos inválidos en el formulario.");
-          } else {
-            setServerError("Ocurrió un error al procesar el registro.");
-          }
-        } else {
-          setServerError("No se pudo conectar con el servidor bancario.");
-        }
-      }
+      setSuccessMsg(
+        `¡Bienvenido ${data?.cliente?.nombres || form.nombres}! Tu cuenta bancaria N° ${data?.cuenta?.numero_cuenta || ""} ha sido creada con éxito. Redirigiendo al inicio de sesión...`
+      );
+      setTimeout(() => {
+        navigate("/login");
+      }, 2200);
     } catch (err) {
-      setServerError("Error de conexión con el backend. Comprueba que el servidor esté activo.");
+      if (err.response && err.response.data && err.response.data.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === "string") {
+          setServerError(detail);
+        } else if (Array.isArray(detail)) {
+          setServerError(detail[0]?.msg || "Datos inválidos en el formulario.");
+        } else {
+          setServerError("Ocurrió un error al procesar el registro.");
+        }
+      } else {
+        setServerError("Error de conexión con el backend bancario. Comprueba que el servidor esté activo.");
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="rg">

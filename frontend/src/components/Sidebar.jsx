@@ -71,6 +71,7 @@ const BanchocoSidebar = () => {
       if (result.isConfirmed) {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+        localStorage.removeItem("active_account");
         Swal.fire({
           title: "Sesión cerrada",
           text: "Has salido correctamente.",

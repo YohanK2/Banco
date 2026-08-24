@@ -1,16 +1,16 @@
 from decimal import Decimal
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Cliente, Cuenta, Usuario
 from app.schemas.account import AccountResponse
-from app.schemas.auth import RegisterRequest, RegisterResponse
+from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, UserMeResponse
 from app.schemas.client import ClientResponse
 from app.schemas.user import UserResponse
 from app.services.account_service import generate_account_number
-from app.utils.security import hash_password
+from app.utils.security import create_access_token, hash_password, verify_password
 
 
 def register_client(
@@ -98,4 +98,81 @@ def register_client(
     except Exception:
         db.rollback()
         return None, "DB_ERROR"
+
+
+def authenticate_user(
+    db: Session, data: LoginRequest
+) -> Tuple[Optional[LoginResponse], Optional[str]]:
+    """
+    Valida las credenciales de un usuario y genera su token JWT:
+    1. Busca el usuario por correo.
+    2. Comprueba que el usuario esté activo.
+    3. Valida la contraseña con bcrypt.
+    4. Carga los datos de Cliente y Cuenta(s).
+    5. Genera el JWT access_token.
+
+    Retorna:
+    - (LoginResponse, None) si el login es exitoso.
+    - (None, "INVALID_CREDENTIALS") si usuario no existe o contraseña incorrecta.
+    - (None, "USER_INACTIVE") si la cuenta está desactivada.
+    """
+    usuario = db.query(Usuario).filter(Usuario.correo == data.correo).first()
+    if usuario is None or not verify_password(data.contrasena, usuario.contrasena_hash):
+        return None, "INVALID_CREDENTIALS"
+
+    if not usuario.estado:
+        return None, "USER_INACTIVE"
+
+    cliente = usuario.cliente
+    cuenta_principal = None
+    if cliente and cliente.cuentas:
+        cuentas_activas = [c for c in cliente.cuentas if c.estado == "ACTIVA"]
+        cuenta_principal = cuentas_activas[0] if cuentas_activas else cliente.cuentas[0]
+
+    token_data = {
+        "sub": str(usuario.id_usuario),
+        "correo": usuario.correo,
+        "rol": usuario.rol,
+    }
+    if cliente:
+        token_data["id_cliente"] = cliente.id_cliente
+        token_data["nombres"] = cliente.nombres
+        token_data["apellidos"] = cliente.apellidos
+
+    token = create_access_token(token_data)
+
+    response = LoginResponse(
+        access_token=token,
+        token_type="bearer",
+        mensaje="Inicio de sesión exitoso",
+        usuario=UserResponse.model_validate(usuario),
+        cliente=ClientResponse.model_validate(cliente) if cliente else None,
+        cuenta=AccountResponse.model_validate(cuenta_principal) if cuenta_principal else None,
+    )
+    return response, None
+
+
+def get_user_me(db: Session, user_id: int) -> Optional[UserMeResponse]:
+    """
+    Obtiene los datos completos del usuario autenticado, su cliente y sus cuentas.
+    """
+    usuario = db.get(Usuario, user_id)
+    if usuario is None:
+        return None
+
+    cliente = usuario.cliente
+    cuentas = []
+    cuenta_principal = None
+    if cliente and cliente.cuentas:
+        cuentas = [AccountResponse.model_validate(c) for c in cliente.cuentas]
+        cuentas_activas = [c for c in cliente.cuentas if c.estado == "ACTIVA"]
+        cuenta_principal = AccountResponse.model_validate(cuentas_activas[0]) if cuentas_activas else cuentas[0]
+
+    return UserMeResponse(
+        usuario=UserResponse.model_validate(usuario),
+        cliente=ClientResponse.model_validate(cliente) if cliente else None,
+        cuentas=cuentas,
+        cuenta_principal=cuenta_principal,
+    )
+
 

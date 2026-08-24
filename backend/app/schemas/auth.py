@@ -1,12 +1,10 @@
-from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.schemas.account import AccountResponse
 from app.schemas.client import ClientResponse
 from app.schemas.user import UserResponse
-
 
 
 class LoginRequest(BaseModel):
@@ -21,8 +19,25 @@ class TokenResponse(BaseModel):
     rol: str
 
 
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    mensaje: str = "Inicio de sesión exitoso"
+    usuario: UserResponse
+    cliente: Optional[ClientResponse] = None
+    cuenta: Optional[AccountResponse] = None
+
+
+class UserMeResponse(BaseModel):
+    usuario: UserResponse
+    cliente: Optional[ClientResponse] = None
+    cuentas: List[AccountResponse] = []
+    cuenta_principal: Optional[AccountResponse] = None
+
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
 
 
 class RegisterRequest(BaseModel):
