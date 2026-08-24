@@ -386,3 +386,16 @@
 .bl-form__footer a:hover {
   text-decoration: underline;
 }
+/* Alerta de error del servidor */
+.bl-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fdeceb;
+  border: 1px solid #f6c6c2;
+  color: #b3261e;
+  font-size: 13px;
+  line-height: 1.45;
+}

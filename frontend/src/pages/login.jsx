@@ -27,7 +27,7 @@ export function validate({ email, password }) {
   return errors;
 }
 
-export default function BanchocoLogin({ onLogin = () => {} }) {
+export default function BanchocoLogin({ onLogin }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,6 +35,10 @@ export default function BanchocoLogin({ onLogin = () => {} }) {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (getSession()) navigate("/dashboard");
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -23,6 +23,7 @@ export default function Retiros() {
   const [serverError, setServerError] = useState('');
   const [step, setStep] = useState('form'); // 'form' | 'confirm' | 'success'
   const [submitting, setSubmitting] = useState(false);
+  const { pushNotification } = useNotifications();
 
   // Cargar cuenta activa al montar
   useEffect(() => {
@@ -105,7 +106,9 @@ export default function Retiros() {
   return (
     <div className="withdraw-page">
       <Sidebar />
-      <div className="withdraw-grid">
+      <div className="withdraw-body">
+        <Topbar title="Retiros" />
+        <div className="withdraw-grid">
         <section className="withdraw-card">
           {step !== 'success' && (
             <>
@@ -230,6 +233,7 @@ export default function Retiros() {
               : 'Borrador'}
           </p>
         </aside>
+        </div>
       </div>
     </div>
   );

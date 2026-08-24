@@ -1,0 +1,346 @@
+/* ================= AJUSTES ================= */
+
+.aj-page {
+  min-height: 100vh;
+  display: flex;
+  background: var(--bg, #f6f8f7);
+  font-family: var(--font-body, 'Inter', sans-serif);
+  color: var(--green-900, #0b3d2e);
+}
+
+.aj-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.aj-content {
+  padding: 22px 20px 40px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ---------- TABS ---------- */
+
+.aj-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.aj-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border, #e4ebe7);
+  background: var(--surface, #ffffff);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--slate-500, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.aj-tab:hover {
+  border-color: var(--mint-500, #1a8f56);
+  color: var(--green-900, #0b3d2e);
+}
+
+.aj-tab.is-active {
+  background: var(--green-900, #0e3a2c);
+  border-color: var(--green-900, #0e3a2c);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ---------- TARJETAS ---------- */
+
+.aj-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e4ebe7);
+  border-radius: 20px;
+  padding: 26px;
+}
+
+.aj-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.aj-card__head h2 {
+  margin: 0 0 3px;
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--green-900, #0b3d2e);
+}
+
+.aj-card__head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--slate-500, #64748b);
+}
+
+.aj-card__icon {
+  color: var(--mint-500, #1a8f56);
+  flex-shrink: 0;
+}
+
+/* ---------- PERFIL ---------- */
+
+.aj-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.aj-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--amber-400, #f2a93b), var(--amber-600, #d98c1f));
+  color: #ffffff;
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 21px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aj-avatar-row h2 {
+  margin: 0;
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.aj-avatar-row p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--slate-400, #94a0b4);
+}
+
+.aj-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+@media (max-width: 680px) {
+  .aj-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aj-info {
+  background: var(--bg, #f6f8f7);
+  border: 1px solid var(--border, #e4ebe7);
+  border-radius: 13px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.aj-info--wide {
+  grid-column: 1 / -1;
+}
+
+.aj-info__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--slate-400, #94a0b4);
+}
+
+.aj-info__value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green-900, #0b3d2e);
+  word-break: break-word;
+}
+
+/* ---------- FORMULARIOS ---------- */
+
+.aj-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+}
+
+.aj-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aj-field label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--green-900, #0b3d2e);
+}
+
+.aj-field input {
+  width: 100%;
+  border: 1px solid var(--border, #e4ebe7);
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--green-900, #0b3d2e);
+  outline: none;
+  transition: border-color 0.15s ease;
+  background: var(--surface, #ffffff);
+}
+
+.aj-field input:focus {
+  border-color: var(--mint-500, #1a8f56);
+}
+
+.btn-primary {
+  align-self: flex-start;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--green-700, #175a3f), var(--green-900, #0e3a2c));
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 11px 26px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* ---------- TOGGLES ---------- */
+
+.aj-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aj-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--bg, #f6f8f7);
+  border: 1px solid var(--border, #e4ebe7);
+  border-radius: 14px;
+  padding: 13px 16px;
+  cursor: pointer;
+}
+
+.aj-toggle strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--green-900, #0b3d2e);
+}
+
+.aj-toggle p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--slate-500, #64748b);
+}
+
+.aj-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.aj-toggle__track {
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--slate-300, #c3cdd6);
+  position: relative;
+  transition: background 0.18s ease;
+}
+
+.aj-toggle__track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s ease;
+}
+
+.aj-toggle input:checked + .aj-toggle__track {
+  background: var(--mint-500, #1a8f56);
+}
+
+.aj-toggle input:checked + .aj-toggle__track::after {
+  transform: translateX(18px);
+}
+
+/* ---------- LÍMITES ---------- */
+
+.aj-limits {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 560px;
+}
+
+.aj-limit__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--slate-500, #64748b);
+  margin-bottom: 7px;
+}
+
+.aj-limit__row span:first-child {
+  font-weight: 600;
+  color: var(--green-900, #0b3d2e);
+}
+
+.aj-limit__bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg, #f6f8f7);
+  border: 1px solid var(--border, #e4ebe7);
+  overflow: hidden;
+}
+
+.aj-limit__bar > div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--lime-400, #9ad64b), var(--mint-500, #1a8f56));
+}
+
+/* ---------- NOTAS ---------- */
+
+.aj-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 20px 0 0;
+  font-size: 12.5px;
+  color: var(--slate-400, #94a0b4);
+}

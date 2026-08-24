@@ -56,6 +56,9 @@ export default function SaldoMovimientos() {
       <Sidebar />
 
       <main className="saldo-main">
+        {/* TOPBAR COMPARTIDO */}
+        <Topbar title="Saldo y movimientos" />
+
         {/* SALUDO */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}

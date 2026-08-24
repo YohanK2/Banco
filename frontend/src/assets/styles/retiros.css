@@ -285,6 +285,10 @@ select.input {
 
 /* ---------- INTEGRACIÓN SIDEBAR ---------- */
 
+.withdraw-body {
+  min-width: 0;
+}
+
 @media (min-width: 980px) {
   .withdraw-page {
     display: flex;
@@ -292,9 +296,10 @@ select.input {
     padding: 0;
   }
 
-  .withdraw-page > .withdraw-grid {
+  .withdraw-page > .withdraw-body {
     flex: 1;
     min-width: 0;
-    margin: 32px auto 48px;
+    margin: 0 auto;
+    padding-bottom: 48px;
   }
 }

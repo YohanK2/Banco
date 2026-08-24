@@ -1,9 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
+import Topbar from '../components/Topbar.jsx';
 import {
-  Search,
-  Bell,
-  Mail,
   ChevronDown,
   Download,
   TrendingUp,

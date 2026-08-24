@@ -155,6 +155,9 @@ export default function BankDashboard() {
       <Sidebar />
 
       <main className="main">
+        {/* TOPBAR COMPARTIDO */}
+        <Topbar title="Resumen" />
+
         {/* SALUDO */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
